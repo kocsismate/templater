@@ -1,0 +1,22 @@
+{
+    "name":"kocsismate90/templater",
+    "description":"Templater",
+    "type":"project",
+    "keywords":["PHP template transformer"],
+    "license":"MIT",
+    "authors":[
+        {
+            "name":"Máté Kocsis",
+            "email":"kocsismate90@gmail.com"
+        }
+    ],
+    "require":{
+        "php":">=5.3.0",
+        "twig/twig": "1.9.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "app\\": "app/"
+        }
+    }
+}
