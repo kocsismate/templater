@@ -18,7 +18,7 @@ class TwigConverter extends Converter
      */
     public function convertFromPHP($fromDir, $toFileName)
     {
-        $this->createTemplateCollectionFromPHP($fromDir, realpath(__DIR__."/../temp")."/$toFileName.php");
+        $this->createTemplateCollectionFromPHP($fromDir, $toFileName);
     }
 
     /**
@@ -48,18 +48,11 @@ class TwigConverter extends Converter
             $content= file_get_contents(realpath($f));
             $matches= array();
             if ($content != null && empty($content) === false) {
-                preg_match_all("/<\?php.*?\?>/s", $content, $matches);
+                $content= preg_replace("/\n\r/", "\n", $content);
+                preg_match_all("/<\?php.*?(\?>|\/\/end)/s", $content, $matches);
                 if ($matches != null && empty($matches[0]) === false) {
                     foreach ($matches[0] as $m) {
-                        echo htmlspecialchars($m) . "<br/>";
-                        $templates[$m] = $m;
-                    }
-                }
-
-                preg_match_all("/<\?php.*?\\\end/s", $content, $matches);
-                if ($matches != null && empty($matches[0]) === false) {
-                    foreach ($matches[0] as $m) {
-                        echo htmlspecialchars($m) . "<br/>";
+                        //echo htmlspecialchars($m) . "<br/>";
                         $templates[$m] = $m;
                     }
                 }
@@ -78,15 +71,11 @@ class TwigConverter extends Converter
             $c++;
         }
         $content.= ");\n";
-        file_put_contents($toFile, $content);
-
-        // Debug kiíratás
-        /*;
-        foreach ($templates as $t) {
-            echo htmlspecialchars("$t")."<br/>";
-            $c++;
+        if (is_dir(__DIR__."/../temp") != true) {
+            mkdir(__DIR__."/../temp");
         }
-        */
+        file_put_contents(realpath(__DIR__."/../temp")."/$toFile.php", $content);
+
         echo "<br/>-----------------------------<br/>NUM OF TEMPLATES: $c<br/>";
     }
 }
