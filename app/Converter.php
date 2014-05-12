@@ -13,6 +13,9 @@ namespace app;
  */
 abstract class Converter
 {
+    const PHP_TEMPLATE_START= "<\?php\s+";
+    const PHP_TEMPLATE_END= "\s*(\?>|\/\/end)";
+
     /**
      * PHP template-ekből konvertál más template-eket.
      *
