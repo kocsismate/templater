@@ -13,16 +13,53 @@ namespace app;
  */
 abstract class Converter
 {
-    const PHP_TEMPLATE_START= "<\?php\s+";
-    const PHP_TEMPLATE_END= "\s*(\?>|\/\/end)";
+    /**
+     * @var array
+     */
+    protected $conversionInfo;
+
+    public function __construct()
+    {
+        $this->conversionInfo= array();
+    }
 
     /**
-     * PHP template-ekből konvertál más template-eket.
-     *
-     * @param string $fromDir Path name
-     * @param string $toFileName File name
+     * @return string
+     */
+    abstract public function getName();
+
+    /**
+     * @param $template
+     * @return string
+     */
+    abstract public function convert($template);
+
+    /**
+     * @return array Keys as names, values as the count of the converted items
+     */
+    final public function getConversionInfo()
+    {
+        return $this->conversionInfo;
+    }
+
+    /**
      * @return mixed
      */
-    abstract public function convertFromPHP($fromDir, $toFileName);
+    final public function echoConversionInfo()
+    {
+        foreach ($this->conversionInfo as $k => $v) {
+            echo "$k: $v<br/>";
+        }
+        echo "<br/>";
+    }
 
+    final public function getConversionInfoSum()
+    {
+        $sum= 0;
+        foreach ($this->conversionInfo as $v) {
+            $sum+= $v;
+        }
+
+        return $sum;
+    }
 }
