@@ -32,17 +32,15 @@ class TwigConverter extends Converter
 
     protected function transform()
     {
-        echo "/" . self::PHP_TEMPLATE_START .
-            "(echo \$([A-Za-z0-9_]+)\s*;)" .
-            self::PHP_TEMPLATE_END . "/s",
-        "\{\{ \\2 \}\}";
-
-        $c = 0;
+        $simpleEcho= 0;
+        $simpleIfClose= 0;
         foreach ($this->templates as &$t) {
-            $c+= $this->transformSimpleEcho($t);
+            $simpleEcho+= $this->transformSimpleEcho($t);
+            $simpleIfClose+= $this->transformSimpleIfClose($t);
         }
 
-        echo "SIMPLE ECHO TRANSFORMS: $c<br/>";
+        echo "SIMPLE ECHO TRANSFORMS: $simpleEcho<br/>";
+        echo "SIMPLE IF CLOSE TRANSFORMS: $simpleIfClose<br/>";
     }
 
     /**
@@ -51,12 +49,32 @@ class TwigConverter extends Converter
      */
     protected function transformSimpleEcho(&$template)
     {
+        $count = 0;
+        $template = preg_replace(
+            "/" . self::PHP_TEMPLATE_START .
+            "(echo\s+\\$([A-Za-z0-9_]+)\s*;)" .
+            self::PHP_TEMPLATE_END . "/s",
+            "{{ \\2 }}",
+            $template,
+            -1,
+            $count
+        );
+
+        return $count;
+    }
+
+    /**
+     * @param string $template
+     * @return int A változások száma
+     */
+    protected function transformSimpleIfClose(&$template)
+    {
         $count= 0;
         $template= preg_replace(
             "/" . self::PHP_TEMPLATE_START .
-            "(echo \\$([A-Za-z0-9_]+)\s*;)" .
+            "\}" .
             self::PHP_TEMPLATE_END . "/s",
-            "{{ a }}",
+            "%}",
             $template,
             -1,
             $count
