@@ -6,6 +6,7 @@ use app\Template;
 use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
+use app\twig\converters\php\PHPConverter;
 
 /**
  * Az osztály rövid leírása

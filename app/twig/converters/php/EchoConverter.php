@@ -30,13 +30,15 @@ class EchoConverter extends Converter
      */
     public function convert($template)
     {
-        /* Lecseréli a <?php echo $warning; ?> típusú template-eket */
-        $name= "Variable";
-        $template = preg_replace(
-            "/".PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::OPTIONAL_STATEMENT_END .
-            PHPTemplate::TEMPLATE_END."/s",
-            "{{ \\1 }}",
+        $name= "Expression";
+        $template = preg_replace_callback(
+            "/" . PHPTemplate::TEMPLATE_START .
+            PHPTemplate::ECHO_BEGIN .
+            PHPConverter::getExpressionRegex() .
+            PHPTemplate::ECHO_OPTIONAL_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
+            function ($matches) {
+                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+            },
             $template,
             -1,
             $count
@@ -50,13 +52,15 @@ class EchoConverter extends Converter
             return $template;
         }
 
-        /* Lecseréli a <?php echo strtolower($warning); ?> típusú template-eket */
-        $name= "Strtolower variable ";
-        $template = preg_replace(
+        $name= "Ternary operator call";
+        $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . "strtolower\(\s*" . PHPTemplate::CAPTURED_VARIABLE . "\s*\)" .
-            PHPTemplate::OPTIONAL_STATEMENT_END .  PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1|lower }}",
+            PHPTemplate::ECHO_BEGIN .
+            PHPConverter::getTernaryOperatorExpressionRegex() .
+            PHPTemplate::ECHO_OPTIONAL_END .PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
+            function ($matches) {
+                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+            },
             $template,
             -1,
             $count
@@ -70,95 +74,16 @@ class EchoConverter extends Converter
             return $template;
         }
 
-        /* Lecseréli a <?php echo $warning["valami"]; ?> típusú template-eket */
-        $name= "Array with string index";
-        $template = preg_replace(
+        $name= "Printf";
+        $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::CAPTURED_ARRAY_STRING_INDEX .
-            PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1.\\2 }}",
-            $template,
-            -1,
-            $count
-        );
-        if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
-        } else {
-            $this->conversionInfo[$name]= 0;
-        }
-        if ($count !== 0) {
-            return $template;
-        }
-
-        /* Lecseréli a <?php echo $warning->valami; ?> típusú template-eket */
-        $name= "Object";
-        $template = preg_replace(
-            "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::OBJECT_REFERENCE .
-            PHPTemplate::CAPTURED_IDENTIFIER .
-            PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1.\\2 }}",
-            $template,
-            -1,
-            $count
-        );
-        if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
-        } else {
-            $this->conversionInfo[$name]= 0;
-        }
-        if ($count !== 0) {
-            return $template;
-        }
-
-        /* Lecseréli a <?php echo $warning[$variable]; ?> típusú template-eket */
-        $name= "Array with variable index";
-        $template = preg_replace(
-            "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::CAPTURED_ARRAY_VARIABLE_INDEX .
-            PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1.\\2 }}",
-            $template,
-            -1,
-            $count
-        );
-        if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
-        } else {
-            $this->conversionInfo[$name]= 0;
-        }
-        if ($count !== 0) {
-            return $template;
-        }
-
-        /* Lecseréli a <?php echo $warning[0]; ?> típusú template-eket */
-        $name= "Array with int index";
-        $template = preg_replace(
-            "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::CAPTURED_ARRAY_INT_INDEX .
-            PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1.\\2 }}",
-            $template,
-            -1,
-            $count
-        );
-        if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
-        } else {
-            $this->conversionInfo[$name]= 0;
-        }
-        if ($count !== 0) {
-            return $template;
-        }
-
-        /* Lecseréli a <?php echo count($warning["valami"]); ?> típusú template-eket */
-        $name= "Count array with string index";
-        $template = preg_replace(
-            "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::ECHO_BEGIN . "count" . PHPTemplate::FUNCTION_OPENING_BRACKET .
-            PHPTemplate::CAPTURED_VARIABLE . PHPTemplate::CAPTURED_ARRAY_STRING_INDEX .
-            PHPTemplate::FUNCTION_CLOSING_BRACKET.PHPTemplate::OPTIONAL_STATEMENT_END .PHPTemplate::TEMPLATE_END . "/s",
-            "{{ \\1|length }}",
+            PHPTemplate::PRINTF_BEGIN .
+            PHPConverter::getExpressionRegex() . PHPTemplate::CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR .
+            PHPConverter::getExpressionRegex() .
+            PHPTemplate::PRINTF_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
+            function ($matches) {
+                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+            },
             $template,
             -1,
             $count
