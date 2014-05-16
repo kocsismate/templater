@@ -62,7 +62,9 @@ final class PHPTemplate extends Template
     const STRING_LITERAL_START= "\s*[\'\"]";
     const STRING_LITERAL_END= "\s*[\'\"]";
 
-    const CAPTURED_FUNCTION_NAME= "\s*(isset|empty|trim|strtolower|count|is_array)\s*"; // is defined is empty, |lower, |length, is iterable
+    const CAPTURED_FUNCTION_NAME= "\s*(isset|empty|trim|strtolower|count|is_array)\s*";
+    const CAPTURED_FUNCTION_CLOSING_BRACKET= "\s*(\))\s*";
+    const ARGUMENT_SEPARATOR= "\s*[,]{0,1}\s*";
     const CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR= "\s*([,]{0,1})\s*";
     
     /**

@@ -37,7 +37,8 @@ class EchoConverter extends Converter
             PHPConverter::getExpressionRegex() .
             PHPTemplate::ECHO_OPTIONAL_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+                $from= 0;
+                return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
             },
             $template,
             -1,
@@ -59,7 +60,8 @@ class EchoConverter extends Converter
             PHPConverter::getTernaryOperatorExpressionRegex() .
             PHPTemplate::ECHO_OPTIONAL_END .PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+                return "!!!";
+                //return "{{ " . PHPConverter::convertTernaryOperatorExpression($matches, 1) . " }}";
             },
             $template,
             -1,
@@ -79,10 +81,10 @@ class EchoConverter extends Converter
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::PRINTF_BEGIN .
             PHPConverter::getExpressionRegex() . PHPTemplate::CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR .
-            PHPConverter::getExpressionRegex() .
             PHPTemplate::PRINTF_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                return "{{ " . PHPConverter::convertVariableCall($matches, 1) . " }}";
+                $from= 0;
+                return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
             },
             $template,
             -1,
