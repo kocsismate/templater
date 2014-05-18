@@ -31,40 +31,59 @@ class ForeachConverter extends Converter
     public function convert($template)
     {
         /* Lecseréli a <?php foreach($a as $v) ?> típusú template-eket */
-        $name= "Value";
+        $name = "Value";
         $template = preg_replace(
-            "/".PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
-            PHPConverter::getExpressionRegex() . PHPTemplate::FOREACH_HEAD_CAPTURED_VALUE.
-            PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END."/s",
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
+            PHPConverter::getExpressionRegex(true) . PHPTemplate::FOREACH_HEAD_CAPTURED_VALUE .
+            PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END . "/s",
             "{% for \\2 in \\1 %}",
             $template,
             -1,
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;
         }
 
         /* Lecseréli a <?php foreach($a as $k => $v) ?> típusú template-eket */
-        $name= "Key and value";
+        $name = "Key and value";
         $template = preg_replace(
-            "/".PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
-            PHPConverter::getExpressionRegex() . PHPTemplate::FOREACH_HEAD_CAPTURED_KEY_AND_VALUE.
-            PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END."/s",
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
+            PHPConverter::getExpressionRegex(true) . PHPTemplate::FOREACH_HEAD_CAPTURED_KEY_AND_VALUE .
+            PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END . "/s",
             "{% for \\3, \\2 in \\1 %}",
             $template,
             -1,
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
+        }
+        if ($count !== 0) {
+            return $template;
+        }
+
+        /* Lecseréli a <?php endforeach; ?> típusú template-eket */
+        $name = "Key and value";
+        $template = preg_replace(
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ENDFOREACH_STATEMENT .
+            PHPTemplate::TEMPLATE_END . "/s",
+            "{% endfor %}",
+            $template,
+            -1,
+            $count
+        );
+        if (isset($this->conversionInfo[$name])) {
+            $this->conversionInfo[$name] += $count;
+        } else {
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;

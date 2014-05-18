@@ -1,8 +1,6 @@
 <?php
 namespace app\twig\converters\php;
 
-use app\php\PHPTemplate;
-
 /**
  * Az osztály rövid leírása
  *
@@ -15,115 +13,342 @@ use app\php\PHPTemplate;
  */
 class PHPConverter
 {
-    /**
-     * @return string
-     */
-    public static function getConditionalExpressionRegex()
+    public static function getOperatorList()
     {
-        return
-            PHPConverter::getConditionRegex() .
-            "(?:".
-                PHPTemplate::CAPTURED_LOGICAL_BINARY_OPERATOR .
-                PHPConverter::getConditionRegex() .
-            ")*";
+        return array("+", "-", "*", "/", "%", ".");
     }
 
-    /**
-     * @return string
-     */
-    public static function getConditionRegex()
+    public static function getComparatorList()
     {
-        return
-            self::getExpressionRegex() .
-            "(?:".
-                PHPTemplate::CAPTURED_COMPARATOR .
-                self::getExpressionRegex() .
-            "){0,1}";
+        return array("<", "<=", "!=", "==", ">=", ">");
+    }
+
+    public static function getLogicalBinaryOperatorList()
+    {
+        return array("&&", "||");
+    }
+
+    public static function getLogicalUnaryOperatorList()
+    {
+        return array("!");
+    }
+
+    public static function getFunctionNameList()
+    {
+        return array("isset", "empty", "trim", "strtolower", "count", "is_array");
+    }
+
+    public static function getTemplateStartRegex()
+    {
+        return "<\?php\s+";
+    }
+
+    public static function getTemplateEndRegex()
+    {
+        return "\s*(?:\?>|\/\/end)";
+    }
+
+    public static function getOpeningBracketRegex()
+    {
+        return "\s*\(\s*";
+    }
+
+    public static function getClosingBracketRegex($isCaptured = false)
+    {
+        $pattern = "\s*\)\s*";
+        if ($isCaptured == true) {
+            $pattern = "($pattern)";
+        }
+
+        return $pattern;
+    }
+
+    public static function getObjectReferenceRegex()
+    {
+        return "\s*(?:->|\:\:)\s*";
+    }
+
+    public static function getStatementEndRegex($isOptional = true)
+    {
+        return "\s*;" . ($isOptional == true ? "*" : "");
+    }
+
+    public static function getOperatorRegex($isCaptured = false)
+    {
+        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $list = self::getOperatorList();
+        $count = count($list);
+        for ($i = 0; $i < $count; $i++) {
+            if ($i != 0) {
+                $pattern .= "|";
+            }
+            $pattern .= "\\" . $list[$i];
+        }
+        $pattern .= ")\s*";
+
+        return $pattern;
+    }
+
+    public static function getComparatorRegex($isCaptured = false)
+    {
+        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $list = self::getComparatorList();
+        $count = count($list);
+        for ($i = 0; $i < $count; $i++) {
+            if ($i != 0) {
+                $pattern .= "|";
+            }
+            $pattern .= "\\" . $list[$i];
+        }
+        $pattern .= ")\s*";
+
+        return $pattern;
+    }
+
+    public static function getLogicalBinaryOperatorRegex($isCaptured = false)
+    {
+        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $list = self::getLogicalBinaryOperatorList();
+        $count = count($list);
+        for ($i = 0; $i < $count; $i++) {
+            if ($i != 0) {
+                $pattern .= "|";
+            }
+            $pattern .= "\\" . $list[$i];
+        }
+        $pattern .= ")\s*";
+
+        return $pattern;
+    }
+
+    public static function getLogicalUnaryOperatorRegex($isOptional = true, $isCaptured = false)
+    {
+        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+
+        $list = self::getLogicalUnaryOperatorList();
+        $count = count($list);
+        for ($i = 0; $i < $count; $i++) {
+            if ($i != 0) {
+                $pattern .= "|";
+            }
+            $pattern .= $list[$i];
+        }
+        $pattern .= ")";
+        if ($isOptional == true) {
+            $pattern .= "{0,1}";
+        }
+
+        $pattern .= "\s*";
+
+        return $pattern;
+    }
+
+    public static function getFunctionNameRegex($isCaptured = false)
+    {
+        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $list = self::getFunctionNameList();
+        $count = count($list);
+        for ($i = 0; $i < $count; $i++) {
+            if ($i != 0) {
+                $pattern .= "|";
+            }
+            $pattern .= $list[$i];
+        }
+        $pattern .= ")\s*";
+
+        return $pattern;
+    }
+
+    public static function getArgumentSeparatorRegex()
+    {
+        return "\s*[,]\s*";
+    }
+
+    public static function getBooleanLiteralRegex($isCaptured = false)
+    {
+        return "(" . ($isCaptured == true ? "" : "?:") . "true|false|TRUE|FALSE)";
+    }
+
+    public static function getIntLiteralRegex($isCaptured = false)
+    {
+        $pattern = "[0-9]+";
+        if ($isCaptured == true) {
+            $pattern = "(" . $pattern . ")";
+        }
+
+        return $pattern;
+    }
+
+    public static function getStringLiteralRegex($isCaptured = false)
+    {
+        return "(" . ($isCaptured == true ? "" : "?:") . "\'[^\.\-\']*\'|\"[^\.\-\"\$]*\")"; // TODO Not containing . -
+    }
+
+    public static function getIdentifierRegex($isCaptured = false)
+    {
+        $pattern = "(?:[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)";
+        if ($isCaptured == true) {
+            $pattern = "($pattern)";
+        }
+
+        return $pattern;
+    }
+
+    public static function getVariableRegex($isCaptured = false)
+    {
+        $pattern = "\\$" . self::getIdentifierRegex(false);
+        if ($isCaptured == true) {
+            $pattern = "($pattern)";
+        }
+
+        return "\s*$pattern\s*";
+    }
+
+    public static function getArrayIntIndexRegex($isCaptured = false)
+    {
+        return "\s*\[\s*" . self::getIntLiteralRegex($isCaptured) . "\s*\]";
+    }
+
+    public static function getArrayStringIndexRegex($isCaptured = false)
+    {
+        return "\s*\[\s*" . self::getStringLiteralRegex($isCaptured) . "\s*\]";
+    }
+
+    public static function getArrayVariableIndexRegex($isCaptured = false)
+    {
+        return "\s*\[\s*" . self::getVariableRegex($isCaptured) . "\s*\]";
     }
 
     /**
      * Returns the regex for matching an expression with ternary operator.
+     * @param boolean $isCaptured
      * @return string
      */
-    public static function getTernaryOperatorExpressionRegex()
+    public static function getTernaryOperatorExpressionRegex($isCaptured = false)
     {
         return
-            "\({0,1}" . self::getConditionalExpressionRegex() . "\){0,1}" .
-            "\s*\?\s*" . self::getExpressionRegex() . "\s*\:\s*" . self::getExpressionRegex();
+            "(" . ($isCaptured == true ? "" : "?:") .
+            "\({0,1}" . self::getConditionalExpressionRegex(false) . "\){0,1}" .
+            "\s*\?\s*" . self::getExpressionRegex(false) . "\s*\:\s*" . self::getExpressionRegex(false) .
+            ")";
+    }
+
+    /**
+     * @param boolean $isCaptured
+     * @return string
+     */
+    public static function getConditionalExpressionRegex($isCaptured = false)
+    {
+        return
+            "(" . ($isCaptured == true ? "" : "?:") .
+                self::getConditionRegex() .
+                "(?:" .
+                    self::getLogicalBinaryOperatorRegex(true) .
+                    self::getConditionRegex() .
+                ")*" .
+            ")";
+    }
+
+    /**
+     * @param boolean $isCaptured
+     * @return string
+     */
+    public static function getConditionRegex($isCaptured = false)
+    {
+        return
+            "(" . ($isCaptured == true ? "" : "?:") .
+                self::getExpressionRegex() .
+                "(?:" .
+                    self::getComparatorRegex(false) .
+                    self::getExpressionRegex() .
+                "){0,1}" .
+            ")";
     }
 
     /**
      * Returns a regex for matching a simple expression.
+     * @param boolean $isCaptured
      * @return string
      */
-    public static function getExpressionRegex()
+    public static function getExpressionRegex($isCaptured = false)
     {
         return
-            PHPConverter::getPrimitiveCallRegex() .
-            "(?:".
-                PHPTemplate::CAPTURED_OPERATOR .
-                PHPConverter::getPrimitiveCallRegex() .
-            ")*";
+            "(" . ($isCaptured == true ? "" : "?:") .
+                self::getPrimitiveCallRegex(false) .
+                "(?:" .
+                    self::getOperatorRegex(false) .
+                    self::getPrimitiveCallRegex(false) .
+                ")*" .
+            ")";
     }
 
     /**
      * Returns a regex for matching a function or a variable call. No recursion allowed.
+     * @param boolean $isCaptured
      * @return string
      */
-    public static function getPrimitiveCallRegex()
+    public static function getPrimitiveCallRegex($isCaptured = false)
     {
         return
-            "(?:" .
-                self::getFunctionCallRegex() . "|" .
-                self::getVariableCallRegex() . "|" .
-                PHPTemplate::CAPTURED_BOOLEAN_LITERAL . "|" .
-                PHPTemplate::CAPTURED_INT_LITERAL . "|" .
-                PHPTemplate::CAPTURED_STRING_LITERAL .
+            "(" . ($isCaptured == true ? "" : "?:") .
+            self::getFunctionCallRegex(false) . "|" .
+            self::getVariableCallRegex(false) . "|" .
+            self::getBooleanLiteralRegex(false) . "|" .
+            self::getIntLiteralRegex(false) . "|" .
+            self::getStringLiteralRegex(false) .
             ")";
     }
 
     /**
      * Returns a regex for matching a function call with zero, one or two arguments.
+     * @param boolean $isCaptured
      * @return string
      */
-    public static function getFunctionCallRegex()
+    public static function getFunctionCallRegex($isCaptured = false)
     {
         return
-            PHPTemplate::CAPTURED_OPTIONAL_UNARY_OPERATOR .
-            PHPTemplate::CAPTURED_FUNCTION_NAME .
-            PHPTemplate::FUNCTION_OPENING_BRACKET .
-            "(?:" .
-                self::getVariableCallRegex() . "|" .
-                PHPTemplate::CAPTURED_BOOLEAN_LITERAL . "|" .
-                PHPTemplate::CAPTURED_INT_LITERAL . "|" .
-                PHPTemplate::CAPTURED_STRING_LITERAL .
-            ")" .
-            "(?:" .
-                PHPTemplate::ARGUMENT_SEPARATOR . "|" .
-                "(?:" .
-                    self::getVariableCallRegex() . "|" .
-                    PHPTemplate::CAPTURED_BOOLEAN_LITERAL . "|" .
-                    PHPTemplate::CAPTURED_INT_LITERAL . "|" .
-                    PHPTemplate::CAPTURED_STRING_LITERAL .
-                ")" .
-            ")*" .
-            PHPTemplate::CAPTURED_FUNCTION_CLOSING_BRACKET;
+            self::getLogicalUnaryOperatorRegex(true, $isCaptured) .
+            self::getFunctionNameRegex($isCaptured) .
+            self::getOpeningBracketRegex(false) .
+            "(" . ($isCaptured == true ? "" : "?:") . "(?:" .
+            self::getArgumentSeparatorRegex(false) . "|" .
+            self::getStaticCallRegex(false) . "|" .
+            ")*)" .
+            self::getClosingBracketRegex(false);
     }
 
     /**
+     * Returns a regex for matching a function call with zero, one or two arguments.
+     * @param boolean $isCaptured
      * @return string
      */
-    public static function getVariableCallRegex()
+    public static function getStaticCallRegex($isCaptured = false)
     {
         return
-            PHPTemplate::CAPTURED_OPTIONAL_UNARY_OPERATOR .
-            PHPTemplate::CAPTURED_VARIABLE .                                                // Variable
-            "((?:".
-                PHPTemplate::ARRAY_INT_INDEX . "|" .                                        // Int array index
-                PHPTemplate::ARRAY_STRING_INDEX . "|" .                                     // String array index
-                PHPTemplate::ARRAY_VARIABLE_INDEX . "|" .                                   // Variable array index
-                PHPTemplate::OBJECT_REFERENCE . PHPTemplate::IDENTIFIER . "\(\)|" .         // Method
-                PHPTemplate::OBJECT_REFERENCE . PHPTemplate::IDENTIFIER .                   // Attribute
+            "(?:" .
+            self::getArgumentSeparatorRegex(false) . "|" .
+            self::getVariableCallRegex($isCaptured) . "|" .
+            self::getBooleanLiteralRegex($isCaptured) . "|" .
+            self::getIntLiteralRegex($isCaptured) . "|" .
+            self::getStringLiteralRegex($isCaptured) .
+            ")";
+    }
+
+    /**
+     * @param boolean $isCaptured
+     * @return string
+     */
+    public static function getVariableCallRegex($isCaptured = false)
+    {
+        return
+            self::getLogicalUnaryOperatorRegex(true, $isCaptured) .
+            self::getVariableRegex($isCaptured) . // Variable
+            "(" . ($isCaptured == true ? "" : "?:") . "(?:" .
+            self::getArrayIntIndexRegex(false) . "|" . // Int array index
+            self::getArrayStringIndexRegex(false) . "|" . // String array index
+            self::getArrayVariableIndexRegex(false) . "|" . // Variable array index
+            self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) . "\(\)|" . // Method
+            self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) . // Attribute
             ")*)";
     }
 
@@ -134,75 +359,64 @@ class PHPConverter
     //-----------------------------------------------------------------------------------------------------------------
 
     /**
+     * Converts a PHP expression to Twig format.
      * @param array $matches
      * @param int $from
-     * @param int $to
      * @return string
      */
-    private static function convertConditionalSide(array $matches, $from, $to = null)
+    public static function convertTernaryOperatorExpression(array $matches, &$from)
     {
-        if (isset($matches[$from]) === false) {
-            return "";
-        }
-        $m= $matches[$from];
+        // The first match is all the operands of the expression
+        $allArguments = $matches[$from];
+        $operands = preg_split("/[\?\:]/", $allArguments); // TODO: not good for strings containing special chars
 
-        if ($m == "") {
-            return "";
+        foreach ($operands as &$a) {
+            $a = trim($a);
         }
-        // Int or string literal
-        if (is_numeric($m) || strpos($m, "\"") === 0 || strpos($m, "'") === 0) {
-            return $m;
-            // Variable call
-        } elseif (strpos($m, "$") == 0) {
-            return self::convertVariableCall($matches, $from);
-            // Other
-        } else {
-            return "";
-        }
+
+        $num= 0;
+        $result = self::convertConditionalExpression($operands, $num);
+        $result.= " ? ";
+        $num++;
+        $result.= self::convertExpression($matches, $num);
+        $result.= " : ";
+        $num++;
+        $result.= self::convertExpression($matches, $num);
+
+        return $result;
     }
 
     /**
      * Converts a PHP conditional expression to a Twig conditional expression.
      * @param array $matches
      * @param int $from
-     * @param int $to
      * @return string
      */
-    private static function convertConditionalExpression(array $matches, $from, $to)
+    public static function convertConditionalExpression(array $matches, &$from)
     {
-        // Left side
-        $result= self::convertConditionalSide($matches, $from + 1, $to);
+        // The first match is all the operands of the expression
+        $allArguments = $matches[$from];
+        $operands = preg_split("/(?:&&|\|\|)/", $allArguments); // TODO: not good for strings containing special chars
+        preg_match_all("/(&&|\|\|)/", $allArguments, $operators);
+        $operators = $operators[1];
 
-        // Operator and right side is present
-        if ($from + 6 < $to) {
-            // Operator
-            $result.= $matches[$from + 6];
-            // Right side
-            $result.= self::convertConditionalSide($matches, $from + 7, $to);
+        foreach ($operands as &$a) {
+            $a = trim($a);
+        }
+
+        $result = "";
+        $count = count($operands);
+        for ($i = 0; $i < $count; $i++) {
+            preg_match("/" . self::getConditionRegex(true) . "/", $operands[$i], $operandMatches);
+            $operandFrom = 1;
+            $result .= self::convertCondition($operandMatches, $operandFrom);
+
+            if ($i + 1 < $count) {
+                $result .= (" " . self::convertLogicalOperator($operators[$i]) . " ");
+            }
         }
 
         return $result;
-    }
-
-    /**
-     * @param array $matches
-     * @param int $from
-     * @param int $to
-     * @return string
-     */
-    private static function convertConditionPart(array $matches, &$from, $to)
-    {
-        // A part is determined to be before the next logical binary operator
-        $expressionTo= $to;
-        for ($i= $from; $i < $to; $i++) {
-            if ($matches[$i] == "&&" || $matches[$i] == "||") {
-                $expressionTo= $i-1;
-                break;
-            }
-        }
-        $from= $expressionTo+1;
-
-        return self::convertConditionalExpression($matches, $from, $expressionTo);
     }
 
     /**
@@ -211,30 +425,38 @@ class PHPConverter
      */
     private static function convertLogicalOperator($operator)
     {
-        $operators= array("&&" => "AND", "||" => "OR", "!" => "NOT");
+        $operators = array("&&" => "AND", "||" => "OR", "!" => "NOT");
         return in_array($operator, $operators) ? $operators[$operator] : $operator;
     }
 
     /**
-     * Converts a PHP condition to a Twig condition.
+     * Converts an elementary PHP condition to Twig format.
      * @param array $matches
      * @param int $from
-     * @param int $to
      * @return string
      */
-    public static function convertCondition(array $matches, $from, $to)
+    public static function convertCondition(array $matches, $from)
     {
-        if ($to - $from < 0 || isset($matches[$from]) != true || $matches[$from] == "") {
-            return $matches[0];
+        // The first match is all the operands of the expression
+        $allArguments = $matches[$from];
+        $operands = preg_split("/(?:<|<=|!=|==|>=|>)/", $allArguments); // TODO: not good for strings containing special chars
+        preg_match_all("/(<|<=|!=|==|>=|>)/", $allArguments, $operators);
+        $operators = $operators[1];
+
+        foreach ($operands as &$a) {
+            $a = trim($a);
         }
 
-        $result= self::convertConditionPart($matches, $from, $to);
+        $result = "";
+        $count = count($operands);
+        for ($i = 0; $i < $count; $i++) {
+            preg_match("/" . self::getExpressionRegex(true) . "/", $operands[$i], $operandMatches);
+            $operandFrom = 1;
+            $result .= self::convertExpression($operandMatches, $operandFrom);
 
-        // Then we start iterating from the first alternative which follows all the alternatives
-        for ($i= $from; $i <= $to; $i++) {
-            $result.= self::convertLogicalOperator($from);
-            $result.= self::convertConditionPart($matches, $from, $to);
-            $i= $from;
+            if ($i + 1 < $count) {
+                $result .= (" " . $operators[$i] . " ");
+            }
         }
 
         return $result;
@@ -248,12 +470,26 @@ class PHPConverter
      */
     public static function convertExpression(array $matches, &$from)
     {
-        // TODO Probably ( needed ) to be an expression
-        $result= self::convertPrimitiveCall($matches, $from);
-        for (; isset($matches[$from]) && in_array($matches[$from], array("+", "-", "*", "/", "%", ".")); $from++) {
-            $result.= " " . $matches[$from] . " ";
-            $from++;
-            $result.= self::convertPrimitiveCall($matches, $from);
+        // The first match is all the operands of the expression
+        $allArguments = $matches[$from];
+        $operands = preg_split("/[\+\-\*\/\%\.]/", $allArguments); // TODO: not good for strings containing special chars
+        preg_match_all("/([\+\-\*\/\%\.])/", $allArguments, $operators);
+        $operators = $operators[1];
+
+        foreach ($operands as &$a) {
+            $a = trim($a);
+        }
+
+        $result = "";
+        $count = count($operands);
+        for ($i = 0; $i < $count; $i++) {
+            preg_match("/" . self::getPrimitiveCallRegex(true) . "/", $operands[$i], $operandMatches);
+            $operandFrom = 1;
+            $result .= self::convertPrimitiveCall($operandMatches, $operandFrom);
+
+            if ($i + 1 < $count) {
+                $result .= (" " . $operators[$i] . " ");
+            }
         }
 
         return $result;
@@ -267,31 +503,42 @@ class PHPConverter
      */
     public static function convertPrimitiveCall(array $matches, &$from)
     {
-        $result= "";
+        $p = $matches[$from];
 
-        for (; isset($matches[$from]) && $result == ""; $from++) {
-            $p= $matches[$from];
-            // String literal
-            if (strpos($p, '"') === 0 || strpos($p, "'") === 0) {
-                $result.= self::convertString($p);
-            // Int literal
-            } elseif (is_numeric($p)) {
-                $result.= self::convertInt($p);
-            // Boolean literal
-            } elseif (is_bool($p)) {
-                $result.= self::convertBoolean($p);
-            } elseif (($p == "" || $p == "!") && count($matches) > $from + 1) {
-                // Variable call
-                if (strpos($matches[$from+1], "$") === 0) {
-                    $result.= self::convertVariableCall($matches, $from);
-                // Function call
-                } else {
-                    $result.= self::convertFunctionCall($matches, $from);
-                }
+        // String literal
+        if (strpos($p, '"') === 0 || strpos($p, "'") === 0) {
+            return self::convertString($p);
+        }
+
+        // Int literal
+        if (is_numeric($p)) {
+            return self::convertInt($p);
+        }
+
+        // Boolean literal
+        if (is_bool($p)) {
+            return self::convertBoolean($p);
+        }
+
+        // Function call
+        foreach (self::getFunctionNameList() as $f) {
+            $pos = strpos($p, $f);
+            if ($pos === 0 || ($pos === 1 && strpos($p, "!") === 0)) {
+                preg_match("/" . self::getFunctionCallRegex(true) . "/", $p, $functionMatches);
+                $functionFrom = 1;
+                return self::convertFunctionCall($functionMatches, $functionFrom);
             }
         }
 
-        return $result;
+        // Variable call
+        $pos = strpos($p, "$");
+        if ($pos === 0 || ($pos === 1 && strpos($p, "!") === 0)) {
+            preg_match("/" . self::getVariableCallRegex(true) . "/", $p, $variableMatches);
+            $variableFrom = 1;
+            return self::convertVariableCall($variableMatches, $variableFrom);
+        }
+
+        return $p;
     }
 
     /**
@@ -303,59 +550,67 @@ class PHPConverter
     public static function convertFunctionCall(array $matches, &$from)
     {
         // The first possible match is the negation
-        $isNegated= $matches[$from++] == "!";
+        $isNegated = $matches[$from++] == "!";
         // The second match is the function name
-        $function= $matches[$from];
-        // The next matches will be the arguments
-        $arguments= array();
+        $function = $matches[$from++];
+        // The next match is the arguments
+        $allArguments = $matches[$from];
+        $argumentMatches = preg_split("/,\n/", $allArguments); // TODO: not good for strings containing ,
+        foreach ($argumentMatches as &$a) {
+            $a = trim($a);
+        }
 
-        for ($from++; isset($matches[$from]) && $matches[$from] != ")"; $from++) {
-            $p= $matches[$from];
+        $arguments = array();
+        $count = count($argumentMatches);
+        for ($i = 0; $i < $count; $i++) {
+            $p = $argumentMatches[$i];
             // String index
             if (strpos($p, '"') === 0 || strpos($p, "'") === 0) {
-                $arguments[]= self::convertString($p);
-            // Int index
+                $arguments[] = self::convertString($p);
+                // Int index
             } elseif (is_numeric($p)) {
-                $arguments[]= self::convertInt($p);
-            // Boolean index
+                $arguments[] = self::convertInt($p);
+                // Boolean index
             } elseif (is_bool($p)) {
-                $arguments[]= self::convertBoolean($p);
-            // Variable index
-            } elseif (($p == "" || $p == "!") && count($matches) > $from+1 && strpos($matches[$from+1], "$") === 0) {
-                $arguments[] = self::convertVariableCall($matches, $from);
+                $arguments[] = self::convertBoolean($p);
+                // Variable index
+            } elseif (strpos($p, "$") === 0 || strpos($p, "!") === 0) {
+                preg_match("/" . self::getVariableCallRegex(true) . "/", $p, $variableMatches);
+                $variableFrom = 1;
+                $arguments[] = self::convertVariableCall($variableMatches, $variableFrom);
             }
         }
 
-        $result= "";
-        switch($function) {
+        $result = "";
+        switch ($function) {
+            case "date":
+                $result = (isset($arguments[1])? $arguments[1] : "\"now\"") . "|date($arguments[0])";
+                break;
             case "isset":
-                $result= $arguments[0] . " IS DEFINED";
+                $result = $arguments[0] . " is defined";
                 break;
             case "empty":
-                $result= $arguments[0] . " IS EMPTY";
+                $result = $arguments[0] . " is empty";
                 break;
             case "trim":
-                $result= $arguments[0] . " | TRIM";
+                $result = $arguments[0] . "|trim";
                 if (isset($arguments[1])) {
-                    $result.= "('".$arguments[1]."')";
+                    $result .= "('" . $arguments[1] . "')";
                 }
                 break;
             case "strtolower":
-                $result= $arguments[0] . " | LOWER";
+                $result = $arguments[0] . "|lower";
                 break;
             case "count":
-                $result= $arguments[0] . " | LENGTH";
+                $result = $arguments[0] . "|length";
                 break;
             case "is_array":
-                $result= $arguments[0] . " IS ITERABLE";
-                break;
-            case "":
-                $result= $arguments[0] . " IS DEFINED";
+                $result = $arguments[0] . " is iterable";
                 break;
         }
 
         if ($isNegated == true) {
-            $result= self::convertNegated($result);
+            $result = self::convertNegated($result);
         }
 
         return $result;
@@ -371,48 +626,55 @@ class PHPConverter
     public static function convertVariableCall(array $matches, &$from)
     {
         // The first possible match is the negation
-        $isNegated= $matches[$from++] == "!";
+        $isNegated = $matches[$from++] == "!";
         // The second match is the variable
-        $result= self::convertVariable($matches[$from]);
+        $result = self::convertVariable($matches[$from++]);
         // The next match is the possible array indexes or object attribute or method references
-        $indexes= $matches[$from+1];
-
+        $indexes = $matches[$from];
         if (strlen($indexes) > 0) {
-            $indexParts= preg_split("/(?:\[|\]|->)/", $indexes);  //FIXME not good for strings containing special chars!
-            // Then we start iterating from the first alternative which follows all the alternatives
+            $indexParts = preg_split("/(?:\[|\]|->)/", $indexes); //FIXME not good for strings containing special chars!
+            // Then we start iterating from the first alternative
             foreach ($indexParts as $p) {
                 if (strlen($p) <= 0) {
                     continue;
                 }
-                $p= trim($p);
+                $p = trim($p);
                 // String index
                 if ($p[0] == '"' || $p[0] == "'") {
-                    $result.= "." . self::convertString($p);
-                // Int index
+                    $result .= "." . self::convertString($p);
+                    // Int index
                 } elseif (is_numeric($p)) {
-                    $result.= "." . self::convertInt($p);
-                // Boolean index
+                    $result .= "." . self::convertInt($p);
+                    // Boolean index
                 } elseif (is_bool($p)) {
-                    $result.= "." . self::convertBoolean($p);
-                // Variable index
+                    $result .= "." . self::convertBoolean($p);
+                    // Variable index
                 } elseif (strpos($p, "$") === 0) {
-                    $result.= "[(" .self::convertVariable($p) . ")]";
-                // Method
-                } elseif (strlen($p) >= 2 && $p[strlen($p)-2] == "(" && $p[strlen($p)-1] == ")") {
-                    $result.= "." . self::convertMethod($p);
-                // Attribute
-                } else {
-                    $result.= ".$p";
+                    $result .= "[(" . self::convertVariable($p) . ")]";
+                    // Method
+                } elseif (strpos($p, "->") == 0 && strlen($p) > 4 && $p[strlen($p) - 2] == "(" && $p[strlen($p) - 1] == ")") {
+                    $result .= "." . self::convertMethod($p);
+                    // Attribute
+                } elseif (strpos($p, "->") == 0 && strlen($p) > 2) {
+                    $result .= ".$p";
                 }
             }
-            $from++;
         }
 
         if ($isNegated == true) {
-            $result= self::convertNegated($result);
+            $result = self::convertNegated($result);
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $attribute
+     * @return string
+     */
+    private static function convertAttribute($attribute)
+    {
+        return substr($attribute, 2);
     }
 
     /**
@@ -421,7 +683,7 @@ class PHPConverter
      */
     private static function convertMethod($method)
     {
-        return str_replace('()', "", $method);
+        return substr($method, 0, -2);
     }
 
     /**
@@ -430,7 +692,7 @@ class PHPConverter
      */
     private static function convertVariable($variable)
     {
-        return str_replace('$', "", $variable);
+        return substr($variable, 1);
     }
 
     /**
@@ -463,7 +725,8 @@ class PHPConverter
         return $string;
     }
 
-    private static function convertNegated($expression) {
-        return $expression . "IS FALSE";
+    private static function convertNegated($expression)
+    {
+        return $expression . " is false"; // TODO When is already present, say "is not"
     }
 }

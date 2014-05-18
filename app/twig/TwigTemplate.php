@@ -49,37 +49,37 @@ final class TwigTemplate extends Template
      */
     public function convertFromPHP($fromPath, $toFileName)
     {
-        $phpTemplate= new PHPTemplate($fromPath);
-        $this->templates= $phpTemplate->getTemplates();
+        $phpTemplate = new PHPTemplate($fromPath);
+        $this->templates = $phpTemplate->getTemplates();
         $this->convertTemplatesFromPHP();
-        $this->writeTemplatesToFile($toFileName."-converted", $this->getConvertedTemplates());
-        $this->writeTemplatesToFile($toFileName."-remaining", $this->getRemainingTemplates());
+        $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTemplates());
+        $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTemplates());
     }
 
     protected function convertTemplatesFromPHP()
     {
-        $echoConverter= new EchoConverter();
-        $ifConverter= new IfConverter();
-        $foreachConverter= new ForeachConverter();
-
+        //echo PHPConverter::getConditionalExpressionRegex(true); exit();
+        $echoConverter = new EchoConverter();
+        $ifConverter = new IfConverter();
+        $foreachConverter = new ForeachConverter();
+        $this->templates = array_slice($this->templates, 25);
         foreach ($this->templates as &$t) {
             $t = $echoConverter->convert($t);
             $t = $ifConverter->convert($t);
             $t = $foreachConverter->convert($t);
-
         }
 
-        echo $echoConverter->getName()."<br/>";
+        echo $echoConverter->getName() . "<br/>";
         $echoConverter->echoConversionInfo();
         echo "----------------------------------------------<br/>";
-        echo $ifConverter->getName()."<br/>";
+        echo $ifConverter->getName() . "<br/>";
         $ifConverter->echoConversionInfo();
         echo "----------------------------------------------<br/>";
-        echo $foreachConverter->getName()."<br/>";
+        echo $foreachConverter->getName() . "<br/>";
         $foreachConverter->echoConversionInfo();
 
         echo "----------------------------------------------<br/>";
-        $sum= $echoConverter->getConversionInfoSum() +
+        $sum = $echoConverter->getConversionInfoSum() +
             $ifConverter->getConversionInfoSum() +
             $foreachConverter->getConversionInfoSum();
         echo "TOTAL: $sum<br/>";

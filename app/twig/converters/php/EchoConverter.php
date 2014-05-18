@@ -30,14 +30,14 @@ class EchoConverter extends Converter
      */
     public function convert($template)
     {
-        $name= "Expression";
+        $name = "Expression";
         $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::ECHO_BEGIN .
-            PHPConverter::getExpressionRegex() .
+            PHPConverter::getExpressionRegex(true) .
             PHPTemplate::ECHO_OPTIONAL_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                $from= 0;
+                $from = 1;
                 return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
             },
             $template,
@@ -45,45 +45,45 @@ class EchoConverter extends Converter
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;
         }
 
-        $name= "Ternary operator call";
+        $name = "Ternary operator call";
         $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::ECHO_BEGIN .
-            PHPConverter::getTernaryOperatorExpressionRegex() .
-            PHPTemplate::ECHO_OPTIONAL_END .PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
+            PHPConverter::getTernaryOperatorExpressionRegex(true) .
+            PHPTemplate::ECHO_OPTIONAL_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                return "!!!";
-                //return "{{ " . PHPConverter::convertTernaryOperatorExpression($matches, 1) . " }}";
+                $from = 1;
+                return "{{ " . PHPConverter::convertTernaryOperatorExpression($matches, $from) . " }}";
             },
             $template,
             -1,
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;
         }
 
-        $name= "Printf";
+        $name = "Printf";
         $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::PRINTF_BEGIN .
-            PHPConverter::getExpressionRegex() . PHPTemplate::CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR .
+            PHPConverter::getExpressionRegex(true) . PHPTemplate::CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR .
             PHPTemplate::PRINTF_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                $from= 0;
+                $from = 0;
                 return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
             },
             $template,
@@ -91,9 +91,9 @@ class EchoConverter extends Converter
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;

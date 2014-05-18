@@ -31,24 +31,82 @@ class IfConverter extends Converter
     public function convert($template)
     {
         /* Lecseréli a <?php if ($warning) ?> típusú template-eket */
-        $name= "Conditional Expression";
-        $template= preg_replace_callback(
+        $name = "Conditional Statements";
+        $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::IF_CONDITION_BEGIN .
-            PHPConverter::getConditionalExpressionRegex() .
+            PHPConverter::getConditionalExpressionRegex(true) .
             PHPTemplate::IF_CONDITION_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                return "!!! $matches[0]";
-                //print_r($matches); echo "<br/><br/>";
-                //return "{% if " . PHPConverter::convertCondition($matches, 1, count($matches)) . " %}";
+                $from = 1;
+                return "{% if " . PHPConverter::convertConditionalExpression($matches, $from) . " %}";
             },
             $template,
             -1,
             $count
         );
         if (isset($this->conversionInfo[$name])) {
-            $this->conversionInfo[$name]+= $count;
+            $this->conversionInfo[$name] += $count;
         } else {
-            $this->conversionInfo[$name]= 0;
+            $this->conversionInfo[$name] = 0;
+        }
+        if ($count !== 0) {
+            return $template;
+        }
+
+        /* Lecseréli a <?php elseif ($warning) ?> típusú template-eket */
+        $name = "Elseif Statements";
+        $template = preg_replace_callback(
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ELSE_IF_CONDITION_BEGIN .
+            PHPConverter::getConditionalExpressionRegex(true) .
+            PHPTemplate::IF_CONDITION_END . PHPTemplate::TEMPLATE_END . "/s",
+            function ($matches) {
+                $from = 1;
+                return "{% elseif " . PHPConverter::convertConditionalExpression($matches, $from) . " %}";
+            },
+            $template,
+            -1,
+            $count
+        );
+        if (isset($this->conversionInfo[$name])) {
+            $this->conversionInfo[$name] += $count;
+        } else {
+            $this->conversionInfo[$name] = 0;
+        }
+        if ($count !== 0) {
+            return $template;
+        }
+
+        /* Lecseréli a <?php else ?> típusú template-eket */
+        $name = "Else Statements";
+        $template = preg_replace(
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ELSE_BEGIN . PHPTemplate::TEMPLATE_END . "/s",
+            "{% else %}",
+            $template,
+            -1,
+            $count
+        );
+        if (isset($this->conversionInfo[$name])) {
+            $this->conversionInfo[$name] += $count;
+        } else {
+            $this->conversionInfo[$name] = 0;
+        }
+        if ($count !== 0) {
+            return $template;
+        }
+
+        /* Lecseréli a <?php endif; ?> típusú template-eket */
+        $name = "Endif Statements";
+        $template = preg_replace(
+            "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ENDIF_STATEMENT . PHPTemplate::TEMPLATE_END . "/s",
+            "{% endif %}",
+            $template,
+            -1,
+            $count
+        );
+        if (isset($this->conversionInfo[$name])) {
+            $this->conversionInfo[$name] += $count;
+        } else {
+            $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
             return $template;

@@ -20,7 +20,7 @@ abstract class Converter
 
     public function __construct()
     {
-        $this->conversionInfo= array();
+        $this->conversionInfo = array();
     }
 
     /**
@@ -55,9 +55,9 @@ abstract class Converter
 
     final public function getConversionInfoSum()
     {
-        $sum= 0;
+        $sum = 0;
         foreach ($this->conversionInfo as $v) {
-            $sum+= $v;
+            $sum += $v;
         }
 
         return $sum;

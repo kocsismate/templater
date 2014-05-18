@@ -21,9 +21,9 @@ abstract class Template
     /**
      * @param string $path
      */
-    public function __construct($path=null)
+    public function __construct($path = null)
     {
-        if($path != null) {
+        if ($path != null) {
             $this->setTemplates($path);
         }
     }
@@ -65,7 +65,7 @@ abstract class Template
      */
     final public function setTemplates($path)
     {
-        $files= $this->getTemplateFiles($path);
+        $files = $this->getTemplateFiles($path);
         $this->templates = array();
 
         foreach ($files as $f) {
@@ -81,7 +81,7 @@ abstract class Template
                 }
             }
         }
-        echo "NUM OF TEMPLATES: ".count($this->templates)."<br/>----------------------------------------------<br/>";
+        echo "NUM OF TEMPLATES: " . count($this->templates) . "<br/>----------------------------------------------<br/>";
     }
 
 
@@ -91,11 +91,11 @@ abstract class Template
      */
     final protected function getConvertedTemplates()
     {
-        $result= array();
+        $result = array();
 
         foreach ($this->templates as $k => $v) {
             if ($k != $v) {
-                $result[$k]= $v;
+                $result[$k] = $v;
             }
         }
 
@@ -108,11 +108,11 @@ abstract class Template
      */
     final protected function getRemainingTemplates()
     {
-        $result= array();
+        $result = array();
 
         foreach ($this->templates as $k => $v) {
             if ($k == $v) {
-                $result[$k]= $v;
+                $result[$k] = $v;
             }
         }
 
@@ -137,7 +137,7 @@ abstract class Template
                 $files[] = $name;
             }
         }
-        echo "NUM OF FILES: ".count($files)."<br/>";
+        echo "NUM OF FILES: " . count($files) . "<br/>";
 
         return $files;
     }
@@ -149,9 +149,9 @@ abstract class Template
      */
     final protected function writeTemplatesToFile($toFile, array $templates)
     {
-        $content= "";
+        $content = "";
         foreach ($templates as $k => $v) {
-            $content.= "$k\n\n$v\n----------------------------------------------------------------------------------\n";
+            $content .= "$k\n\n$v\n----------------------------------------------------------------------------------\n";
         }
         if (is_dir($this->getTempDirectory()) != true) {
             mkdir($this->getTempDirectory());
@@ -170,7 +170,7 @@ abstract class Template
         foreach ($templates as $k => $v) {
             $k = addslashes($k);
             $v = addslashes($v);
-            $content.= "'" . $k . "' =>\n'" . $v . "',\n\n";
+            $content .= "'" . $k . "' =>\n'" . $v . "',\n\n";
         }
         $content .= ");\n";
         if (is_dir($this->getTempDirectory()) != true) {
