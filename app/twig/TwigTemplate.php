@@ -6,7 +6,6 @@ use app\Template;
 use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
-use app\twig\converters\php\PHPConverter;
 
 /**
  * Az osztály rövid leírása
@@ -58,15 +57,33 @@ final class TwigTemplate extends Template
 
     protected function convertTemplatesFromPHP()
     {
-        //echo PHPConverter::getConditionalExpressionRegex(true); exit();
+        //echo PHPConverter::getTernaryOperatorExpressionRegex(true); exit();
         $echoConverter = new EchoConverter();
         $ifConverter = new IfConverter();
         $foreachConverter = new ForeachConverter();
-        $this->templates = array_slice($this->templates, 25);
+        $this->templates = array_slice($this->templates, 0);
         foreach ($this->templates as &$t) {
-            $t = $echoConverter->convert($t);
-            $t = $ifConverter->convert($t);
-            $t = $foreachConverter->convert($t);
+            $u= $t;
+            $u = $echoConverter->convert($u);
+            $u = $ifConverter->convert($u);
+            $u = $foreachConverter->convert($u);
+
+            // Fallback
+            /*if ($u == $t && substr_count($t, "\n") > 1) {
+                $lines= explode("\n", $t);
+                foreach ($lines as $l) {
+                    $l.= " ?>";
+                    $u= $l;
+                    $u = $echoConverter->convert($u);
+                    $u = $ifConverter->convert($u);
+                    $u = $foreachConverter->convert($u);
+
+                    echo "$u ===> $l<br/>";
+                }
+            }
+            */
+
+            $t= $u;
         }
 
         echo $echoConverter->getName() . "<br/>";

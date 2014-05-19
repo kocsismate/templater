@@ -79,12 +79,11 @@ class EchoConverter extends Converter
         $name = "Printf";
         $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
-            PHPTemplate::PRINTF_BEGIN .
-            PHPConverter::getExpressionRegex(true) . PHPTemplate::CAPTURED_OPTIONAL_ARGUMENT_SEPARATOR .
-            PHPTemplate::PRINTF_END . PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
+            PHPConverter::getFunctionCallRegex(true) .
+            PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
             function ($matches) {
-                $from = 0;
-                return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
+                $from = 1;
+                return "{{ " . PHPConverter::convertFunctionCall($matches, $from) . " }}";
             },
             $template,
             -1,

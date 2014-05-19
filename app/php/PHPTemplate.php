@@ -30,11 +30,9 @@ final class PHPTemplate extends Template
     const ELSE_IF_CONDITION_BEGIN = "\s*[\}]{0,1}\s*(?:elseif|else if)\s*\(\s*";
     const ELSE_BEGIN = "\s*[\}]{0,1}\s*else\s*[\{\:]*\s*";
     const ENDIF_STATEMENT = "\s*[\}]{0,1}\s*endif\s*[;]{0,1}\s*";
-    const IF_CONDITION_END = "\)\s*[\{\:]{0,1}";
+    const IF_CONDITION_END = "\s*\)\s*[\{\:]{0,1}";
 
     const FOREACH_HEAD_BEGIN = "foreach\s*\(\s*";
-    const FOREACH_HEAD_CAPTURED_VALUE = "\s*as\s*\\$([A-Za-z0-9_]+)";
-    const FOREACH_HEAD_CAPTURED_KEY_AND_VALUE = "\s*as\s*\\$([A-Za-z0-9_]+)\s*=>\s*\\$([A-Za-z0-9_]+)";
     const FOREACH_HEAD_END = "\s*\)\s*[\{\:]*\s*";
     const ENDFOREACH_STATEMENT = "\s*[\}]{0,1}\s*endforeach\s*[;]{0,1}\s*";
 

@@ -32,11 +32,18 @@ class ForeachConverter extends Converter
     {
         /* Lecseréli a <?php foreach($a as $v) ?> típusú template-eket */
         $name = "Value";
-        $template = preg_replace(
+        $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
-            PHPConverter::getExpressionRegex(true) . PHPTemplate::FOREACH_HEAD_CAPTURED_VALUE .
+            PHPConverter::getExpressionRegex(true) . "\s*as\s*" . PHPConverter::getVariableRegex(true) .
             PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{% for \\2 in \\1 %}",
+            function ($matches) {
+                $from = 2;
+                $result= "{% for " . PHPConverter::convertVariable($matches[$from]) . " in ";
+                $from= 1;
+                $result.= (PHPConverter::convertExpression($matches, $from) . " %}");
+
+                return $result;
+            },
             $template,
             -1,
             $count
@@ -52,11 +59,21 @@ class ForeachConverter extends Converter
 
         /* Lecseréli a <?php foreach($a as $k => $v) ?> típusú template-eket */
         $name = "Key and value";
-        $template = preg_replace(
+        $template = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
-            PHPConverter::getExpressionRegex(true) . PHPTemplate::FOREACH_HEAD_CAPTURED_KEY_AND_VALUE .
+            PHPConverter::getExpressionRegex(true) . "\s*as\s*" .
+            PHPConverter::getVariableRegex(true) . "\s*=>\s*" . PHPConverter::getVariableRegex(true) .
             PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END . "/s",
-            "{% for \\3, \\2 in \\1 %}",
+            function ($matches) {
+                $from = 2;
+                $result= "{% for " . PHPConverter::convertVariable($matches[$from]) . ", ";
+                $from = 3;
+                $result.= PHPConverter::convertVariable($matches[$from]) . " in ";
+                $from= 1;
+                $result.= (PHPConverter::convertExpression($matches, $from) . " %}");
+
+                return $result;
+            },
             $template,
             -1,
             $count
