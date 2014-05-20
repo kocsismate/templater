@@ -20,6 +20,16 @@ use app\twig\converters\php\IfConverter;
 final class TwigTemplate extends Template
 {
     /**
+     * @see \app\Template::setConverters()
+     */
+    protected function setConverters()
+    {
+        $this->addConverter(new EchoConverter());
+        $this->addConverter(new IfConverter());
+        $this->addConverter(new ForeachConverter());
+    }
+
+    /**
      * @see \app\Template::getExtension()
      */
     protected function getExtension()
@@ -49,56 +59,53 @@ final class TwigTemplate extends Template
     public function convertFromPHP($fromPath, $toFileName)
     {
         $phpTemplate = new PHPTemplate($fromPath);
-        $this->templates = $phpTemplate->getTemplates();
-        $this->convertTemplatesFromPHP();
+        $this->tags = $phpTemplate->getTags();
+        $this->convertPHPTags();
         $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTemplates());
         $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTemplates());
     }
 
-    protected function convertTemplatesFromPHP()
+    protected function convertPHPTags()
     {
-        //echo PHPConverter::getTernaryOperatorExpressionRegex(true); exit();
-        $echoConverter = new EchoConverter();
-        $ifConverter = new IfConverter();
-        $foreachConverter = new ForeachConverter();
-        $this->templates = array_slice($this->templates, 0);
-        foreach ($this->templates as &$t) {
-            $u= $t;
-            $u = $echoConverter->convert($u);
-            $u = $ifConverter->convert($u);
-            $u = $foreachConverter->convert($u);
+        foreach ($this->tags as &$tag) {
+            $u= $tag;
 
-            // Fallback
-            /*if ($u == $t && substr_count($t, "\n") > 1) {
-                $lines= explode("\n", $t);
-                foreach ($lines as $l) {
-                    $l.= " ?>";
-                    $u= $l;
-                    $u = $echoConverter->convert($u);
-                    $u = $ifConverter->convert($u);
-                    $u = $foreachConverter->convert($u);
+            // Conversion
+            $u= $this->convertTag($u);
 
-                    echo "$u ===> $l<br/>";
+            // Fallback if there was no conversion and the input has multiple lines
+            if ($u == $tag && substr_count($tag, "\n") >= 1) {
+                $success= true;
+                $lines= explode("\n", $tag);
+                $count= count($lines);
+                for ($i= 0; $i < $count && $success === true; $i++) {
+                    // Converting lines into PHP templates
+                    if ($i != 0) {
+                        $lines[$i]= "<?php " . $lines[$i];
+                    }
+                    if ($i != $count - 1) {
+                        $lines[$i].= " ?>";
+                    }
+                    $line= $lines[$i];
+
+                    // Converting templates into the desired format
+                    $line= $this->convertTag($line);
+
+                    // If the line is converted to the source format then saving the "working copy", otherwise failing
+                    if ($line != $lines[$i]) {
+                        $lines[$i]= $line;
+                    } else {
+                        $success= false;
+                    }
+                }
+
+                // If all the lines were converted then converting the whole template
+                if ($success === true) {
+                    $u= implode("\n", $lines);
                 }
             }
-            */
 
-            $t= $u;
+            $tag= $u;
         }
-
-        echo $echoConverter->getName() . "<br/>";
-        $echoConverter->echoConversionInfo();
-        echo "----------------------------------------------<br/>";
-        echo $ifConverter->getName() . "<br/>";
-        $ifConverter->echoConversionInfo();
-        echo "----------------------------------------------<br/>";
-        echo $foreachConverter->getName() . "<br/>";
-        $foreachConverter->echoConversionInfo();
-
-        echo "----------------------------------------------<br/>";
-        $sum = $echoConverter->getConversionInfoSum() +
-            $ifConverter->getConversionInfoSum() +
-            $foreachConverter->getConversionInfoSum();
-        echo "TOTAL: $sum<br/>";
     }
 }

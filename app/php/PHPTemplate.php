@@ -37,6 +37,13 @@ final class PHPTemplate extends Template
     const ENDFOREACH_STATEMENT = "\s*[\}]{0,1}\s*endforeach\s*[;]{0,1}\s*";
 
     /**
+     * @see \app\Template::setConverters()
+     */
+    protected function setConverters()
+    {
+    }
+
+    /**
      * @see \app\Template::getExtension()
      */
     protected function getExtension()

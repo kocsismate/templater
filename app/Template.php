@@ -16,17 +16,29 @@ abstract class Template
     /**
      * @var array The collection of templates
      */
-    protected $templates;
+    protected $tags;
+
+    /**
+     * @var array:\app\Converter The collection of converters
+     */
+    protected $converters= array();
 
     /**
      * @param string $path
      */
     public function __construct($path = null)
     {
+        $this->setConverters();
         if ($path != null) {
-            $this->setTemplates($path);
+            $this->setTags($path);
         }
     }
+
+    /**
+     * Add the converters here.
+     * @return mixed
+     */
+    abstract protected function setConverters();
 
     /**
      * @return string
@@ -55,18 +67,18 @@ abstract class Template
     /**
      * @return array
      */
-    public function getTemplates()
+    public function getTags()
     {
-        return $this->templates;
+        return $this->tags;
     }
 
     /**
      * @param string $path
      */
-    final public function setTemplates($path)
+    final public function setTags($path)
     {
         $files = $this->getTemplateFiles($path);
-        $this->templates = array();
+        $this->tags = array();
 
         foreach ($files as $f) {
             $content = file_get_contents(realpath($f));
@@ -76,14 +88,13 @@ abstract class Template
                 preg_match_all($this->getTemplateCollectorRegex(), $content, $matches);
                 if ($matches != null && empty($matches[0]) === false) {
                     foreach ($matches[0] as $m) {
-                        $this->templates[$m] = $m;
+                        $this->tags[$m] = $m;
                     }
                 }
             }
         }
-        echo "NUM OF TEMPLATES: " . count($this->templates) . "<br/>----------------------------------------------<br/>";
+        echo "NUM OF TEMPLATES: " . count($this->tags) . "<br/>---------------------------------------------<br/>";
     }
-
 
     /**
      * Az eddig már módosított template-eket adja vissza.
@@ -93,7 +104,7 @@ abstract class Template
     {
         $result = array();
 
-        foreach ($this->templates as $k => $v) {
+        foreach ($this->tags as $k => $v) {
             if ($k != $v) {
                 $result[$k] = $v;
             }
@@ -110,7 +121,7 @@ abstract class Template
     {
         $result = array();
 
-        foreach ($this->templates as $k => $v) {
+        foreach ($this->tags as $k => $v) {
             if ($k == $v) {
                 $result[$k] = $v;
             }
@@ -151,7 +162,7 @@ abstract class Template
     {
         $content = "";
         foreach ($templates as $k => $v) {
-            $content .= "$k\n\n$v\n----------------------------------------------------------------------------------\n";
+            $content .= "$k\n\n$v\n---------------------------------------------------------------------------------\n";
         }
         if (is_dir($this->getTempDirectory()) != true) {
             mkdir($this->getTempDirectory());
@@ -177,5 +188,55 @@ abstract class Template
             mkdir($this->getTempDirectory());
         }
         file_put_contents(realpath($this->getTempDirectory()) . "/$toFile.php", $content);
+    }
+
+    /**
+     * @param string $input
+     * @return string
+     */
+    final protected function convertTag($input)
+    {
+        $output= $input;
+
+        foreach ($this->converters as $converter) {
+            if ($converter instanceof Converter) {
+                $output = $converter->convert($output);
+
+                // If conversion is successful then finishing
+                if ($output != $input) {
+                    break;
+                }
+            }
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param \app\Converter $converter
+     */
+    final protected function addConverter(Converter $converter)
+    {
+        $this->converters[]= $converter;
+    }
+
+    /**
+     * Prints the information about the conversion.
+     */
+    final public function printConversionInfo()
+    {
+        $sum= 0;
+
+        foreach ($this->converters as $converter) {
+            if ($converter instanceof Converter) {
+                $sum+= $converter->getConversionInfoSum();
+
+                echo $converter->getName() . "<br/>";
+                $converter->echoConversionInfo();
+                echo "----------------------------------------------<br/>";
+            }
+        }
+
+        echo "TOTAL: $sum<br/>";
     }
 }

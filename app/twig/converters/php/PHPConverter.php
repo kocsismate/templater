@@ -35,7 +35,7 @@ class PHPConverter
 
     public static function getFunctionNameList()
     {
-        return array("isset", "empty", "trim", "strtolower", "count", "is_array", "date", "printf");
+        return array("isset", "empty", "trim", "strtolower", "count", "is_array", "date", "printf", "strip_tags");
     }
 
     public static function getTemplateStartRegex()
@@ -123,7 +123,7 @@ class PHPConverter
 
     public static function getLogicalUnaryOperatorRegex($isOptional = true, $isCaptured = false)
     {
-        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $pattern = "(" . ($isCaptured == true ? "" : "?:");
 
         $list = self::getLogicalUnaryOperatorList();
         $count = count($list);
@@ -145,7 +145,7 @@ class PHPConverter
 
     public static function getFunctionNameRegex($isCaptured = false)
     {
-        $pattern = "\s*(" . ($isCaptured == true ? "" : "?:");
+        $pattern = "(" . ($isCaptured == true ? "" : "?:");
         $list = self::getFunctionNameList();
         $count = count($list);
         for ($i = 0; $i < $count; $i++) {
@@ -154,7 +154,7 @@ class PHPConverter
             }
             $pattern .= $list[$i];
         }
-        $pattern .= ")\s*";
+        $pattern .= ")";
 
         return $pattern;
     }
@@ -196,12 +196,12 @@ class PHPConverter
 
     public static function getVariableRegex($isCaptured = false)
     {
-        $pattern = "\\$" . self::getIdentifierRegex(false);
+        $pattern = "\\$(?!_SESSION|_REQUEST|_GET|_POST|_GLOBAL)" . self::getIdentifierRegex(false);
         if ($isCaptured == true) {
             $pattern = "($pattern)";
         }
 
-        return "\s*$pattern\s*";
+        return "$pattern";
     }
 
     public static function getArrayIntIndexRegex($isCaptured = false)
@@ -241,10 +241,10 @@ class PHPConverter
     {
         return
             "(" . ($isCaptured == true ? "" : "?:") .
-                self::getConditionRegex() .
+                self::getConditionRegex(false) .
                 "(?:" .
-                    self::getLogicalBinaryOperatorRegex(true) .
-                    self::getConditionRegex() .
+                    self::getLogicalBinaryOperatorRegex(false) .
+                    self::getConditionRegex(false) .
                 ")*" .
             ")";
     }
@@ -257,10 +257,10 @@ class PHPConverter
     {
         return
             "(" . ($isCaptured == true ? "" : "?:") .
-                self::getExpressionRegex() .
+                self::getExpressionRegex(false) .
                 "(?:" .
                     self::getComparatorRegex(false) .
-                    self::getExpressionRegex() .
+                    self::getExpressionRegex(false) .
                 "){0,1}" .
             ")";
     }
@@ -340,17 +340,29 @@ class PHPConverter
      */
     public static function getVariableCallRegex($isCaptured = false)
     {
-        // FIXME excluding global variables ($_SESSION)
         return
             self::getLogicalUnaryOperatorRegex(true, $isCaptured) .
             self::getVariableRegex($isCaptured) . // Variable
-            "(" . ($isCaptured == true ? "" : "?:") . "(?:" .
-            self::getArrayIntIndexRegex(false) . "|" . // Int array index
-            self::getArrayStringIndexRegex(false) . "|" . // String array index
-            self::getArrayVariableIndexRegex(false) . "|" . // Variable array index
-            self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) . "\(\)|" . // Method
-            self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) . // Attribute
-            ")*)";
+            "(" . ($isCaptured == true ? "" : "?:") .
+                self::getVariableIndexRegex(true, false) .
+            ")";
+    }
+
+    /**
+     * @param boolean $isOptional
+     * @param boolean $isCaptured
+     * @return string
+     */
+    public static function getVariableIndexRegex($isOptional = true, $isCaptured = false)
+    {
+        return
+            "(" . ($isCaptured == true ? "" : "?:") .
+                self::getArrayIntIndexRegex(false) . "|" .                                      // Int array index
+                self::getArrayStringIndexRegex(false) . "|" .                                   // String array index
+                self::getArrayVariableIndexRegex(false) . "|" .                                 // Variable array index
+                self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false)."\(\)|". // Method
+                self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) .        // Attribute
+            ")" . ($isOptional == true? "*" : "");
     }
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -461,8 +473,6 @@ class PHPConverter
      */
     public static function convertCondition(array $matches, $from)
     {
-        // FIXME variable operand not converting well
-
         // The first match is all the operands of the expression
         $condition = trim($matches[$from]);
         preg_match_all(
@@ -561,7 +571,7 @@ class PHPConverter
      */
     public static function convertPrimitiveCall(array $matches, &$from)
     {
-        $p = $matches[$from];
+        $p = trim($matches[$from]);
         $q= self::convertStaticCall($matches, $from);
 
         if ($p == $q) {
@@ -571,12 +581,12 @@ class PHPConverter
                 if ($pos === 0 || ($pos === 1 && strpos($p, "!") === 0)) {
                     preg_match("/" . self::getFunctionCallRegex(true) . "/", $p, $functionMatches);
                     $functionFrom = 1;
-                    $p= self::convertFunctionCall($functionMatches, $functionFrom);
+                    $q= self::convertFunctionCall($functionMatches, $functionFrom);
                 }
             }
         }
 
-        return $p;
+        return $q;
     }
 
     /**
@@ -632,9 +642,6 @@ class PHPConverter
                 if (isset($arguments[1])) {
                     $result .= "('" . $arguments[1] . "')";
                 }
-                if ($isNegated == true) {
-                    $result = self::convertNegated($result);
-                }
                 break;
             case "strtolower":
                 $result = $arguments[0] . "|lower";
@@ -651,6 +658,9 @@ class PHPConverter
             case "is_array":
                 $result = $arguments[0] . " is ".($isNegated? "not " : "")."iterable";
                 break;
+            case "strip_tags":                                  // TODO Only supports one argument
+                $result = $arguments[0] . "|striptags";
+                break;
         }
 
         return $result;
@@ -664,32 +674,32 @@ class PHPConverter
      */
     public static function convertStaticCall(array $matches, &$from)
     {
-        $p = $matches[$from];
+        $staticCall = trim($matches[$from]);
 
         // String literal
-        if (strpos($p, '"') === 0 || strpos($p, "'") === 0) {
-            return $p;
+        if (strpos($staticCall, '"') === 0 || strpos($staticCall, "'") === 0) {
+            return $staticCall;
         }
 
         // Int literal
-        if (is_numeric($p)) {
-            return self::convertInt($p);
+        if (is_numeric($staticCall)) {
+            return self::convertInt($staticCall);
         }
 
         // Boolean literal
-        if (is_bool($p)) {
-            return self::convertBoolean($p);
+        if (is_bool($staticCall)) {
+            return self::convertBoolean($staticCall);
         }
 
         // Variable call
-        $pos = strpos($p, "$");
-        if ($pos === 0 || ($pos === 1 && strpos($p, "!") === 0)) {
-            preg_match("/" . self::getVariableCallRegex(true) . "/", $p, $variableMatches);
+        $pos = strpos($staticCall, "$");
+        if ($pos === 0 || ($pos === 1 && strpos($staticCall, "!") === 0)) {
+            preg_match("/" . self::getVariableCallRegex(true) . "/", $staticCall, $variableMatches);
             $variableFrom = 1;
             return self::convertVariableCall($variableMatches, $variableFrom);
         }
 
-        return $p;
+        return $staticCall;
     }
 
     /**
@@ -704,39 +714,14 @@ class PHPConverter
         // The first possible match is the negation
         $isNegated = $matches[$from++] == "!";
         // The second match is the variable
-        $result = self::convertVariable($matches[$from++]);
+        $matches[$from]= trim($matches[$from]);
+        $result= self::convertVariable($matches[$from++]);
         // The next match is the possible array indexes or object attribute or method references
         $indexes = $matches[$from];
         if (strlen($indexes) > 0) {
-            $indexParts = preg_split("/(?:\[|\]|->)/", $indexes); //FIXME not good for strings containing special chars!
-            // Then we start iterating from the first alternative
-            foreach ($indexParts as $p) {
-                $length= strlen($p);
-
-                if ($length <= 0) {
-                    continue;
-                }
-                $p = trim($p);
-                // String index
-                if ($p[0] == '"' || $p[0] == "'") {
-                    $result .= "." . self::convertString($p);
-                    // Int index
-                } elseif (is_numeric($p)) {
-                    $result .= "." . self::convertInt($p);
-                    // Boolean index
-                } elseif (is_bool($p)) {
-                    $result .= "." . self::convertBoolean($p);
-                    // Variable index
-                } elseif (strpos($p, "$") === 0) {
-                    $result .= "[(" . self::convertVariable($p) . ")]";
-                    // Method
-                } elseif (strpos($p, "->") == 0 && $length > 4 && $p[$length - 2] == "(" && $p[$length - 1] == ")") {
-                    $result .= "." . self::convertMethod($p);
-                    // Attribute
-                } elseif (strpos($p, "->") == 0 && $length > 2) {
-                    $result .= ".$p";
-                }
-            }
+            preg_match("/" . self::getVariableIndexRegex(true, true) . "/", $indexes, $indexMatches);
+            $indexFrom = 1;
+            $result.= self::convertVariableIndexes($indexMatches, $indexFrom);
         }
 
         if ($isNegated == true) {
@@ -747,12 +732,63 @@ class PHPConverter
     }
 
     /**
+     * Converts PHP variable indexes to Twig variable indexes.
+     * @param array $matches
+     * @param int $from
+     * @return string
+     */
+    public static function convertVariableIndexes(array $matches, &$from)
+    {
+        $result= "";
+        $count= count($matches);
+        for ($i= $from; $i < $count; $i++) {
+            $index= trim($matches[$i], "[] \t\n\r\0\x0B");
+            $length= strlen($index);
+
+            if ($length <= 0) {
+                continue;
+            }
+
+            // String index
+            if ($index[0] == '"' || $index[0] == "'") {
+                $result .= "." . self::convertString($index);
+            // Int index
+            } elseif (is_numeric($index)) {
+                $result .= "." . self::convertInt($index);
+            // Boolean index
+            } elseif (is_bool($index)) {
+                $result .= "." . self::convertBoolean($index);
+            // Variable index
+            } elseif (strpos($index, "$") === 0) {
+                $result .= "[(" . self::convertVariable($index) . ")]";
+            // Method
+            } elseif (strpos($index, "->")==0 && $length > 4 && $index[$length-2] == "(" && $index[$length-1] == ")") {
+                $result .= "." . self::convertMethod($index);
+            // Attribute
+            } elseif (strpos($index, "->") == 0 && $length > 2) {
+                $result .= "." . self::convertAttribute($index);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $attribute
+     * @return string
+     */
+    public static function convertAttribute($attribute)
+    {
+        return substr($attribute, 2);
+    }
+
+    /**
      * @param string $method
      * @return string
      */
     public static function convertMethod($method)
     {
-        return substr($method, 0, -2);
+        return substr($method, 2, -2);
     }
 
     /**
@@ -796,6 +832,6 @@ class PHPConverter
 
     public static function convertNegated($expression)
     {
-        return $expression . " is false";
+        return $expression . " == false";
     }
 }
