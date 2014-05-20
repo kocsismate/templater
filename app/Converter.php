@@ -53,7 +53,7 @@ abstract class Converter
         echo "<br/>";
     }
 
-    final public function getConversionInfoSum()
+    final public function getConversionInfoDifferentSum()
     {
         $sum = 0;
         foreach ($this->conversionInfo as $v) {

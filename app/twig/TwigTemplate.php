@@ -60,6 +60,7 @@ final class TwigTemplate extends Template
     {
         $phpTemplate = new PHPTemplate($fromPath);
         $this->tags = $phpTemplate->getTags();
+        $this->setTagInfo($phpTemplate->getTagInfo());
         $this->convertPHPTags();
         $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTemplates());
         $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTemplates());

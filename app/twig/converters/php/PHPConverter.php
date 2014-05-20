@@ -181,7 +181,15 @@ class PHPConverter
 
     public static function getStringLiteralRegex($isCaptured = false)
     {
+        // TODO Supporting escaped (\' or \") strings
         return "(" . ($isCaptured == true ? "" : "?:") . "\'[^\']*\'|\"[^\"\$]*\")";
+        /*$result= '(["\'])(?:\\\\?+.)*?\1';
+        if ($isCaptured) {
+            $result= "(" . $result . ")";
+        }
+
+        return $result;
+        */
     }
 
     public static function getIdentifierRegex($isCaptured = false)

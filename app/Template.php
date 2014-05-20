@@ -19,6 +19,11 @@ abstract class Template
     protected $tags;
 
     /**
+     * @var array Supplementary information about the tags
+     */
+    protected $tagInfo;
+
+    /**
      * @var array:\app\Converter The collection of converters
      */
     protected $converters= array();
@@ -79,7 +84,10 @@ abstract class Template
     {
         $files = $this->getTemplateFiles($path);
         $this->tags = array();
+        $this->tagInfo = array();
 
+        $allTagCount= 0;
+        $differentTagCount= 0;
         foreach ($files as $f) {
             $content = file_get_contents(realpath($f));
             $matches = array();
@@ -88,12 +96,24 @@ abstract class Template
                 preg_match_all($this->getTemplateCollectorRegex(), $content, $matches);
                 if ($matches != null && empty($matches[0]) === false) {
                     foreach ($matches[0] as $m) {
-                        $this->tags[$m] = $m;
+                        if (isset($this->tags[$m]) == false) {
+                            $this->tags[$m]= $m;
+                            $this->tagInfo[$m]= array("files" => array(), "count" => 0);
+                            $differentTagCount++;
+                        }
+                        $this->tagInfo[$m]["files"][]= realpath($f);
+                        $this->tagInfo[$m]["count"]++;
+                        $allTagCount++;
                     }
                 }
             }
         }
-        echo "NUM OF TEMPLATES: " . count($this->tags) . "<br/>---------------------------------------------<br/>";
+        echo "----------------------------------------------<br/>";
+        echo "----------------------------------------------<br/>";
+        echo "TAGS FETCHED:<br/>";
+        echo "All: $allTagCount<br/>";
+        echo "Different: $differentTagCount<br/><br/>";
+        echo "---------------------------------------------<br/>";
     }
 
     /**
@@ -148,7 +168,7 @@ abstract class Template
                 $files[] = $name;
             }
         }
-        echo "NUM OF FILES: " . count($files) . "<br/>";
+        echo "FILES: " . count($files) . "<br/>";
 
         return $files;
     }
@@ -225,11 +245,10 @@ abstract class Template
      */
     final public function printConversionInfo()
     {
-        $sum= 0;
-
+        $differentSum= 0;
         foreach ($this->converters as $converter) {
             if ($converter instanceof Converter) {
-                $sum+= $converter->getConversionInfoSum();
+                $differentSum+= $converter->getConversionInfoDifferentSum();
 
                 echo $converter->getName() . "<br/>";
                 $converter->echoConversionInfo();
@@ -237,6 +256,33 @@ abstract class Template
             }
         }
 
-        echo "TOTAL: $sum<br/>";
+        $allSum= 0;
+        if (empty($this->tagInfo) == false) {
+            foreach ($this->tagInfo as $key => $info) {
+                if ($key != $this->tags[$key]) {
+                    $allSum += $info["count"];
+                }
+            }
+        }
+        echo "----------------------------------------------<br/>";
+        echo "TAGS CONVERTED:<br/>";
+        echo "All: $allSum<br/>";
+        echo "Different: $differentSum<br/>";
+    }
+
+    /**
+     * @param array $tagInfo
+     */
+    public function setTagInfo($tagInfo)
+    {
+        $this->tagInfo = $tagInfo;
+    }
+
+    /**
+     * @return array
+     */
+    public final function getTagInfo()
+    {
+        return $this->tagInfo;
     }
 }
