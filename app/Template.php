@@ -259,7 +259,7 @@ abstract class Template
         $allSum= 0;
         if (empty($this->tagInfo) == false) {
             foreach ($this->tagInfo as $key => $info) {
-                if ($key != $this->tags[$key]) {
+                if (isset($this->tags[$key]) && $key != $this->tags[$key]) {
                     $allSum += $info["count"];
                 }
             }

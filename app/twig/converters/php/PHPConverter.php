@@ -209,7 +209,7 @@ class PHPConverter
             $pattern = "($pattern)";
         }
 
-        return "$pattern";
+        return $pattern;
     }
 
     public static function getArrayIntIndexRegex($isCaptured = false)
@@ -225,6 +225,14 @@ class PHPConverter
     public static function getArrayVariableIndexRegex($isCaptured = false)
     {
         return "\s*\[\s*" . self::getVariableRegex($isCaptured) . "\s*\]";
+    }
+
+    public static function getArrayVariableStringArrayIndexRegex($isCaptured = false)
+    {
+        return
+            "\s*\[\s*(" . ($isCaptured? "" : "?:" ) .
+            self::getVariableRegex(false) . self::getArrayStringIndexRegex(false) .
+            ")\s*\]";
     }
 
     /**
@@ -319,7 +327,7 @@ class PHPConverter
             self::getFunctionNameRegex($isCaptured) .
             self::getOpeningBracketRegex(false) .
             "(" . ($isCaptured == true ? "" : "?:") . "(?:" .
-            self::getArgumentSeparatorRegex(false) . "|" .
+            self::getArgumentSeparatorRegex() . "|" .
             self::getStaticCallRegex(false) . "|" .
             ")*)" .
             self::getClosingBracketRegex(false);
@@ -334,7 +342,7 @@ class PHPConverter
     {
         return
             "(" . ($isCaptured == true ? "" : "?:") .
-                self::getArgumentSeparatorRegex(false) . "|" .
+                self::getArgumentSeparatorRegex() . "|" .
                 self::getVariableCallRegex(false) . "|" .
                 self::getBooleanLiteralRegex(false) . "|" .
                 self::getIntLiteralRegex(false) . "|" .
@@ -350,7 +358,7 @@ class PHPConverter
     {
         return
             self::getLogicalUnaryOperatorRegex(true, $isCaptured) .
-            self::getVariableRegex($isCaptured) . // Variable
+            self::getVariableRegex($isCaptured) .
             "(" . ($isCaptured == true ? "" : "?:") .
                 self::getVariableIndexRegex(true, false) .
             ")";
@@ -364,13 +372,14 @@ class PHPConverter
     public static function getVariableIndexRegex($isOptional = true, $isCaptured = false)
     {
         return
-            "(" . ($isCaptured == true ? "" : "?:") .
+            "(" . ($isCaptured == true ? "" : "?:") . "(?:" .
                 self::getArrayIntIndexRegex(false) . "|" .                                      // Int array index
                 self::getArrayStringIndexRegex(false) . "|" .                                   // String array index
+                self::getArrayVariableStringArrayIndexRegex(false) . "|" .                      // String array index
                 self::getArrayVariableIndexRegex(false) . "|" .                                 // Variable array index
                 self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false)."\(\)|". // Method
                 self::getObjectReferenceRegex(false) . self::getIdentifierRegex(false) .        // Attribute
-            ")" . ($isOptional == true? "*" : "");
+            ")" . ($isOptional == true? "*" : "") . ")";
     }
 
     //-----------------------------------------------------------------------------------------------------------------
@@ -617,7 +626,10 @@ class PHPConverter
         $arguments = array();
         $count = count($argumentMatches);
         for ($i = 0; $i < $count; $i++) {
-            $arguments[]= self::convertStaticCall($argumentMatches, $i);
+            // Ignoring argument separators
+            if ($i % 2 == 0) {
+                $arguments[] = self::convertStaticCall($argumentMatches, $i);
+            }
         }
 
         $result = "";
@@ -625,8 +637,8 @@ class PHPConverter
             case "printf":
                 $result = $arguments[0] . "|format(";
                 $count= count($arguments);
-                for ($i= 1; $i < $count; $i++) {
-                    if ($i > 1) {
+                for ($i= 0; $i < $count; $i++) {
+                    if ($i > 0) {
                         $result.= ", ";
                     }
                     $result.= $arguments[$i];
@@ -727,6 +739,7 @@ class PHPConverter
         // The next match is the possible array indexes or object attribute or method references
         $indexes = $matches[$from];
         if (strlen($indexes) > 0) {
+            // TODO indexes are not matched well
             preg_match("/" . self::getVariableIndexRegex(true, true) . "/", $indexes, $indexMatches);
             $indexFrom = 1;
             $result.= self::convertVariableIndexes($indexMatches, $indexFrom);
@@ -749,14 +762,16 @@ class PHPConverter
     {
         $result= "";
         $count= count($matches);
-        for ($i= $from; $i < $count; $i++) {
-            $index= trim($matches[$i], "[] \t\n\r\0\x0B");
+        for ($i= $from; $i < $count; $i++)  {
+            $index= trim($matches[$i], "[ \t\n\r\0\x0B");
             $length= strlen($index);
+            if ($index[$length-1] == "]") {
+                $index= substr_replace($index, "", -1);
+            }
 
             if ($length <= 0) {
                 continue;
             }
-
             // String index
             if ($index[0] == '"' || $index[0] == "'") {
                 $result .= "." . self::convertString($index);
@@ -766,7 +781,11 @@ class PHPConverter
             // Boolean index
             } elseif (is_bool($index)) {
                 $result .= "." . self::convertBoolean($index);
-            // Variable index
+            // Variable string array index
+            } elseif (strpos($index, "$") === 0 && strpos($index, "[") !== false) {
+                preg_match("/" . self::getVariableCallRegex(true, true) . "/", $index, $stringArrayIndexMatches);
+                $stringArrayIndexFrom= 1;
+                $result .= "[(" . self::convertVariableCall($stringArrayIndexMatches, $stringArrayIndexFrom) . ")]";
             } elseif (strpos($index, "$") === 0) {
                 $result .= "[(" . self::convertVariable($index) . ")]";
             // Method
