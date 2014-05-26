@@ -24,6 +24,11 @@ abstract class Template
     protected $tagInfo;
 
     /**
+     * @var array The path of the files which are converted
+     */
+    protected $files;
+
+    /**
      * @var array:\app\Converter The collection of converters
      */
     protected $converters= array();
@@ -33,6 +38,7 @@ abstract class Template
      */
     public function __construct($path = null)
     {
+        $this->files= array();
         $this->setConverters();
         if ($path != null) {
             $this->setTags($path);
@@ -70,6 +76,30 @@ abstract class Template
     abstract public function convertFromPHP($fromPath, $toFileName);
 
     /**
+     * @param string|null $renamedExtensions
+     */
+    final public function saveConversion($renamedExtensions = null)
+    {
+        //Convert tags
+        foreach ($this->getConvertedTags() as $key => $tag) {
+            $info= $this->getTagInfo();
+            foreach ($info[$key]["files"] as $file) {
+                $text= file_get_contents($file);
+                $text= str_replace($key, $tag, $text);
+                file_put_contents($file, $text);
+            }
+        }
+
+        // Rename extensions if requested
+        if ($renamedExtensions != null) {
+            foreach ($this->files as $file) {
+                $extension= pathinfo($file, PATHINFO_EXTENSION);
+                rename($file, substr_replace($file, $extension, -(strlen($extension))));
+            }
+        }
+    }
+
+    /**
      * @return array
      */
     public function getTags()
@@ -82,13 +112,13 @@ abstract class Template
      */
     final public function setTags($path)
     {
-        $files = $this->getTemplateFiles($path);
+        $this->getTemplateFiles($path);
         $this->tags = array();
         $this->tagInfo = array();
 
         $allTagCount= 0;
         $differentTagCount= 0;
-        foreach ($files as $f) {
+        foreach ($this->files as $f) {
             $content = file_get_contents(realpath($f));
             $matches = array();
             if ($content != null && empty($content) === false) {
@@ -120,7 +150,7 @@ abstract class Template
      * Az eddig már módosított template-eket adja vissza.
      * @return array
      */
-    final protected function getConvertedTemplates()
+    final protected function getConvertedTags()
     {
         $result = array();
 
@@ -137,7 +167,7 @@ abstract class Template
      * Az eddig még nem módosított template-eket adja vissza.
      * @return array
      */
-    final protected function getRemainingTemplates()
+    final protected function getRemainingTags()
     {
         $result = array();
 
@@ -151,7 +181,7 @@ abstract class Template
     }
 
     /**
-     * @see \app\Template::getTemplateFiles()
+     * @param string $path
      */
     final protected function getTemplateFiles($path)
     {
@@ -162,15 +192,12 @@ abstract class Template
         );
 
         // Fájllista szűrése csak .tpl kiterjesztésű fájlokra
-        $files = array();
         foreach ($filesObject as $name => $object) {
             if (pathinfo($name, PATHINFO_EXTENSION) == $this->getExtension()) {
-                $files[] = $name;
+                $this->files[] = $name;
             }
         }
-        echo "FILES: " . count($files) . "<br/>";
-
-        return $files;
+        echo "FILES: " . count($this->files) . "<br/>";
     }
 
     /**
@@ -273,7 +300,7 @@ abstract class Template
     /**
      * @param array $tagInfo
      */
-    public function setTagInfo($tagInfo)
+    final public function setTagInfo($tagInfo)
     {
         $this->tagInfo = $tagInfo;
     }
@@ -281,7 +308,7 @@ abstract class Template
     /**
      * @return array
      */
-    public final function getTagInfo()
+    final public function getTagInfo()
     {
         return $this->tagInfo;
     }

@@ -63,8 +63,8 @@ final class TwigTemplate extends Template
         $this->tags = $phpTemplate->getTags();
         $this->setTagInfo($phpTemplate->getTagInfo());
         $this->convertPHPTags();
-        $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTemplates());
-        $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTemplates());
+        $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTags());
+        $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTags());
     }
 
     protected function convertPHPTags()
