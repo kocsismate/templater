@@ -15,6 +15,7 @@ $converter= new TwigTemplate();
 $converter->convertFromPHP("extension_of_templates", "/path/of/templates", "name_of_the_project");
 $converter->printConversionInfo();
 $converter->saveConversion();
+$converter->renameFileExtensions("twig");
 ```
 
 In the temp directory, you will get two files:

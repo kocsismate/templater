@@ -53,10 +53,11 @@ final class TwigTemplate extends Template
     {
         $phpTemplate = new PHPTemplate($extension, $fromPath);
         $this->tags = $phpTemplate->getTags();
+        $this->files= $phpTemplate->getFiles();
         $this->setTagInfo($phpTemplate->getTagInfo());
         $this->convertPHPTags();
-        $this->writeTemplatesToFile($toFileName . "-converted", $this->getConvertedTags());
-        $this->writeTemplatesToFile($toFileName . "-remaining", $this->getRemainingTags());
+        $this->writeTagsToFile($toFileName . "-converted", $this->getConvertedTags());
+        $this->writeTagsToFile($toFileName . "-remaining", $this->getRemainingTags());
     }
 
     protected function convertPHPTags()

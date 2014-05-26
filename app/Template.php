@@ -78,9 +78,9 @@ abstract class Template
     abstract public function convertFromPHP($extension, $fromPath, $toFileName);
 
     /**
-     * @param string|null $renamedExtensions
+     * Saves conversion to files
      */
-    final public function saveConversion($renamedExtensions = null)
+    final public function saveConversion()
     {
         //Convert tags
         foreach ($this->getConvertedTags() as $key => $tag) {
@@ -91,13 +91,17 @@ abstract class Template
                 file_put_contents($file, $text);
             }
         }
+    }
 
-        // Rename extensions if requested
-        if ($renamedExtensions != null) {
-            foreach ($this->files as $file) {
-                $extension= pathinfo($file, PATHINFO_EXTENSION);
-                rename($file, substr_replace($file, $extension, -(strlen($extension))));
-            }
+    /**
+     * @param string $toExtension
+     */
+    final public function renameFileExtensions($toExtension)
+    {
+        foreach ($this->files as $file) {
+            $extension= pathinfo($file, PATHINFO_EXTENSION);
+            echo $extension . " | " . substr_replace($file, $toExtension, -strlen($extension));
+            rename($file, substr_replace($file, $toExtension, -strlen($extension)));
         }
     }
 
@@ -207,7 +211,7 @@ abstract class Template
      * @param string $toFile
      * @param array $templates
      */
-    final protected function writeTemplatesToFile($toFile, array $templates)
+    final protected function writeTagsToFile($toFile, array $templates)
     {
         $content = "";
         foreach ($templates as $k => $v) {
@@ -224,7 +228,7 @@ abstract class Template
      * @param string $toFile
      * @param array $templates
      */
-    final protected function writeTemplatesToPHPFile($toFile, array $templates)
+    final protected function writeTagsToPHPFile($toFile, array $templates)
     {
         $content = "<?php return array(\n";
         foreach ($templates as $k => $v) {
@@ -297,6 +301,22 @@ abstract class Template
         echo "TAGS CONVERTED:<br/>";
         echo "All: $allSum<br/>";
         echo "Different: $differentSum<br/>";
+    }
+
+    /**
+     * @return array
+     */
+    public function getFiles()
+    {
+        return $this->files;
+    }
+
+    /**
+     * @param array $files
+     */
+    public function setFiles($files)
+    {
+        $this->files = $files;
     }
 
     /**
