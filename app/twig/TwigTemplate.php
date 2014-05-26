@@ -31,14 +31,6 @@ final class TwigTemplate extends Template
     }
 
     /**
-     * @see \app\Template::getExtension()
-     */
-    protected function getExtension()
-    {
-        return "twig";
-    }
-
-    /**
      * @return string
      */
     protected function getTemplateCollectorRegex()
@@ -57,9 +49,9 @@ final class TwigTemplate extends Template
     /**
      * @see \app\Template::convertFromPHP()
      */
-    public function convertFromPHP($fromPath, $toFileName)
+    public function convertFromPHP($extension, $fromPath, $toFileName)
     {
-        $phpTemplate = new PHPTemplate($fromPath);
+        $phpTemplate = new PHPTemplate($extension, $fromPath);
         $this->tags = $phpTemplate->getTags();
         $this->setTagInfo($phpTemplate->getTagInfo());
         $this->convertPHPTags();

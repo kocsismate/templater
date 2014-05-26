@@ -29,6 +29,11 @@ abstract class Template
     protected $files;
 
     /**
+     * @var string The name of extensions
+     */
+    protected $extension;
+
+    /**
      * @var array:\app\Converter The collection of converters
      */
     protected $converters= array();
@@ -36,9 +41,10 @@ abstract class Template
     /**
      * @param string $path
      */
-    public function __construct($path = null)
+    public function __construct($extension="tpl", $path = null)
     {
         $this->files= array();
+        $this->extension= $extension;
         $this->setConverters();
         if ($path != null) {
             $this->setTags($path);
@@ -54,11 +60,6 @@ abstract class Template
     /**
      * @return string
      */
-    abstract protected function getExtension();
-
-    /**
-     * @return string
-     */
     abstract protected function getTempDirectory();
 
     /**
@@ -67,13 +68,14 @@ abstract class Template
     abstract protected function getTemplateCollectorRegex();
 
     /**
-     * PHP template-ekből konvertál más template-eket.
+     * Converts from PHP.
      *
+     * @param string $extension
      * @param string $fromPath Path name
      * @param string $toFileName File name
      * @return mixed
      */
-    abstract public function convertFromPHP($fromPath, $toFileName);
+    abstract public function convertFromPHP($extension, $fromPath, $toFileName);
 
     /**
      * @param string|null $renamedExtensions
@@ -311,5 +313,21 @@ abstract class Template
     final public function getTagInfo()
     {
         return $this->tagInfo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExtension()
+    {
+        return $this->extension;
+    }
+
+    /**
+     * @param string $extension
+     */
+    public function setExtension($extension)
+    {
+        $this->extension = $extension;
     }
 }

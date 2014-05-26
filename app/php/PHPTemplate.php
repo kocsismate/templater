@@ -44,14 +44,6 @@ final class PHPTemplate extends Template
     }
 
     /**
-     * @see \app\Template::getExtension()
-     */
-    protected function getExtension()
-    {
-        return "tpl";
-    }
-
-    /**
      * @return string
      */
     protected function getTemplateCollectorRegex()
@@ -70,7 +62,7 @@ final class PHPTemplate extends Template
     /**
      * @see \app\Template::convertFromPHP()
      */
-    public function convertFromPHP($fromPath, $toFileName)
+    public function convertFromPHP($extension, $fromPath, $toFileName)
     {
         throw new \Exception("");
     }
