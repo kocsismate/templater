@@ -740,9 +740,9 @@ class PHPConverter
         $indexes = $matches[$from];
         if (strlen($indexes) > 0) {
             // TODO indexes are not matched well
-            preg_match("/" . self::getVariableIndexRegex(true, true) . "/", $indexes, $indexMatches);
-            $indexFrom = 1;
-            $result.= self::convertVariableIndexes($indexMatches, $indexFrom);
+            preg_match_all("/" . self::getVariableIndexRegex(false, true) . "/", $indexes, $indexMatches);
+            $indexFrom = 0;
+            $result.= self::convertVariableIndexes($indexMatches[1], $indexFrom);
         }
 
         if ($isNegated == true) {
@@ -765,13 +765,14 @@ class PHPConverter
         for ($i= $from; $i < $count; $i++)  {
             $index= trim($matches[$i], "[ \t\n\r\0\x0B");
             $length= strlen($index);
+            if ($length <= 0) {
+                continue;
+            }
+
             if ($index[$length-1] == "]") {
                 $index= substr_replace($index, "", -1);
             }
 
-            if ($length <= 0) {
-                continue;
-            }
             // String index
             if ($index[0] == '"' || $index[0] == "'") {
                 $result .= "." . self::convertString($index);
