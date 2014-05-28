@@ -126,7 +126,7 @@ abstract class Template
         foreach ($this->getConvertedTags() as $key => $tag) {
             foreach ($info[$key]["fileNames"] as $fileName) {
                 $this->fileContents[$fileName]= str_replace($key, $tag, $this->fileContents[$fileName]);
-                //file_put_contents($fileName, $this->fileContents);
+                file_put_contents($fileName, $this->fileContents);
             }
         }
     }
