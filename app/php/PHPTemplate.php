@@ -46,7 +46,7 @@ final class PHPTemplate extends Template
     /**
      * @return string
      */
-    protected function getTemplateCollectorRegex()
+    final public function getTemplateCollectorRegex()
     {
         return "/" . self::TEMPLATE_START . ".*?" . self::TEMPLATE_END . "/s";
     }
@@ -62,7 +62,7 @@ final class PHPTemplate extends Template
     /**
      * @see \app\Template::convertFromPHP()
      */
-    public function convertFromPHP($extension, $fromPath, $toFileName)
+    public function convertFromPHP()
     {
         throw new \Exception("");
     }

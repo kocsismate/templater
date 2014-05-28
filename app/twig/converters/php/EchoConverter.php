@@ -25,13 +25,13 @@ class EchoConverter extends Converter
     }
 
     /**
-     * @param $template
+     * @param string $tag
      * @return string
      */
-    public function convert($template)
+    public function convert($tag)
     {
         $name = "Expression";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::ECHO_BEGIN .
             PHPConverter::getExpressionRegex(true) .
@@ -40,7 +40,7 @@ class EchoConverter extends Converter
                 $from = 1;
                 return "{{ " . PHPConverter::convertExpression($matches, $from) . " }}";
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -50,11 +50,11 @@ class EchoConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         $name = "Ternary operator call";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPTemplate::ECHO_BEGIN .
             PHPConverter::getTernaryOperatorExpressionRegex(true) .
@@ -63,7 +63,7 @@ class EchoConverter extends Converter
                 $from = 1;
                 return "{{ " . PHPConverter::convertTernaryOperatorExpression($matches, $from) . " }}";
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -73,11 +73,11 @@ class EchoConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         $name = "Printf";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START .
             PHPConverter::getFunctionCallRegex(true) .
             PHPTemplate::OPTIONAL_STATEMENT_END . PHPTemplate::TEMPLATE_END . "/s",
@@ -85,7 +85,7 @@ class EchoConverter extends Converter
                 $from = 1;
                 return "{{ " . PHPConverter::convertFunctionCall($matches, $from) . " }}";
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -95,9 +95,9 @@ class EchoConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
-        return $template;
+        return $tag;
     }
 }

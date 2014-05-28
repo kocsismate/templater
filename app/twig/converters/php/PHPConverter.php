@@ -762,7 +762,7 @@ class PHPConverter
     {
         $result= "";
         $count= count($matches);
-        for ($i= $from; $i < $count; $i++)  {
+        for ($i= $from; $i < $count; $i++) {
             $index= trim($matches[$i], "[ \t\n\r\0\x0B");
             $length= strlen($index);
             if ($length <= 0) {

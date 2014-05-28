@@ -29,10 +29,10 @@ abstract class Converter
     abstract public function getName();
 
     /**
-     * @param $template
+     * @param $tag
      * @return string
      */
-    abstract public function convert($template);
+    abstract public function convert($tag);
 
     /**
      * @return array Keys as names, values as the count of the converted items
@@ -45,7 +45,7 @@ abstract class Converter
     /**
      * @return mixed
      */
-    final public function echoConversionInfo()
+    final public function printConversionInfo()
     {
         foreach ($this->conversionInfo as $k => $v) {
             echo "$k: $v<br/>";

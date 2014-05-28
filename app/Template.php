@@ -1,6 +1,8 @@
 <?php
 namespace app;
 
+use app\InjectionConverter;
+
 /**
  * Az osztály rövid leírása
  *
@@ -19,14 +21,44 @@ abstract class Template
     protected $tags;
 
     /**
+     * @var int
+     */
+    protected $allTagCount;
+
+    /**
+     * @var int
+     */
+    protected $differentTagCount;
+
+    /**
      * @var array Supplementary information about the tags
      */
     protected $tagInfo;
 
     /**
+     * @var string
+     */
+    protected $path;
+
+    /**
      * @var array The path of the files which are converted
      */
-    protected $files;
+    protected $fileNames;
+
+    /**
+     * @var string
+     */
+    protected $projectName;
+
+    /**
+     * @var string
+     */
+    protected $templateCollectorRegex;
+
+    /**
+     * @var array The content of the files
+     */
+    protected $fileContents;
 
     /**
      * @var string The name of extensions
@@ -34,21 +66,37 @@ abstract class Template
     protected $extension;
 
     /**
+     * @var \app\InjectionConverter|null
+     */
+    protected $injectionConverter= null;
+
+    /**
      * @var array:\app\Converter The collection of converters
      */
     protected $converters= array();
 
     /**
+     * @param \app\Template $template
+     */
+    protected function setSourceTemplate(Template $template)
+    {
+        $this->setTemplateCollectorRegex($template->getTemplateCollectorRegex());
+    }
+
+    /**
+     * @param string $extension
      * @param string $path
      */
-    public function __construct($extension="tpl", $path = null)
+    public function __construct($extension = "tpl", $path = null, $projectName = "")
     {
-        $this->files= array();
+        $this->fileNames= array();
+        $this->fileContents= array();
+        $this->projectName= $projectName;
+        $this->tags = array();
+        $this->tagInfo = array();
         $this->extension= $extension;
+        $this->path= $path;
         $this->setConverters();
-        if ($path != null) {
-            $this->setTags($path);
-        }
     }
 
     /**
@@ -63,19 +111,10 @@ abstract class Template
     abstract protected function getTempDirectory();
 
     /**
-     * @return string
-     */
-    abstract protected function getTemplateCollectorRegex();
-
-    /**
      * Converts from PHP.
-     *
-     * @param string $extension
-     * @param string $fromPath Path name
-     * @param string $toFileName File name
      * @return mixed
      */
-    abstract public function convertFromPHP($extension, $fromPath, $toFileName);
+    abstract public function convertFromPHP();
 
     /**
      * Saves conversion to files
@@ -85,10 +124,9 @@ abstract class Template
         //Convert tags
         foreach ($this->getConvertedTags() as $key => $tag) {
             $info= $this->getTagInfo();
-            foreach ($info[$key]["files"] as $file) {
-                $text= file_get_contents($file);
-                $text= str_replace($key, $tag, $text);
-                file_put_contents($file, $text);
+            foreach ($info[$key]["fileNames"] as $fileName) {
+                $this->fileContents= str_replace($key, $tag, $this->fileContents[$fileName]);
+                file_put_contents($fileName, $this->fileContents);
             }
         }
     }
@@ -98,10 +136,17 @@ abstract class Template
      */
     final public function renameFileExtensions($toExtension)
     {
-        foreach ($this->files as $file) {
-            $extension= pathinfo($file, PATHINFO_EXTENSION);
-            echo $extension . " | " . substr_replace($file, $toExtension, -strlen($extension));
-            rename($file, substr_replace($file, $toExtension, -strlen($extension)));
+        foreach ($this->fileNames as $fileName) {
+            $extension= pathinfo($fileName, PATHINFO_EXTENSION);
+            rename($fileName, substr_replace($fileName, $toExtension, -strlen($extension)));
+        }
+    }
+
+    protected function convertInjected($projectName)
+    {
+        $this->injectionConverter->setInjectionsFile($projectName);
+        foreach ($this->fileContents as &$templateFileContent) {
+            $templateFileContent= $this->injectionConverter->convert($templateFileContent);
         }
     }
 
@@ -114,18 +159,23 @@ abstract class Template
     }
 
     /**
-     * @param string $path
+     * Initializes the template file information and collects the tags.
      */
-    final public function setTags($path)
+    final public function initialize()
     {
-        $this->getTemplateFiles($path);
-        $this->tags = array();
-        $this->tagInfo = array();
+        $this->injectionConverter= new InjectionConverter();
+        $this->setTemplateFileInfo();
+        $this->setTags();
+    }
 
-        $allTagCount= 0;
-        $differentTagCount= 0;
-        foreach ($this->files as $f) {
-            $content = file_get_contents(realpath($f));
+    /**
+     * Collects template tags.
+     */
+    final private function setTags()
+    {
+        $this->allTagCount= 0;
+        $this->differentTagCount= 0;
+        foreach ($this->fileContents as $fileName => $content) {
             $matches = array();
             if ($content != null && empty($content) === false) {
                 $content = preg_replace("/\n\r/", "\n", $content);
@@ -134,22 +184,16 @@ abstract class Template
                     foreach ($matches[0] as $m) {
                         if (isset($this->tags[$m]) == false) {
                             $this->tags[$m]= $m;
-                            $this->tagInfo[$m]= array("files" => array(), "count" => 0);
-                            $differentTagCount++;
+                            $this->tagInfo[$m]= array("fileNames" => array(), "count" => 0);
+                            $this->differentTagCount++;
                         }
-                        $this->tagInfo[$m]["files"][]= realpath($f);
+                        $this->tagInfo[$m]["fileNames"][]= realpath($fileName);
                         $this->tagInfo[$m]["count"]++;
-                        $allTagCount++;
+                        $this->allTagCount++;
                     }
                 }
             }
         }
-        echo "----------------------------------------------<br/>";
-        echo "----------------------------------------------<br/>";
-        echo "TAGS FETCHED:<br/>";
-        echo "All: $allTagCount<br/>";
-        echo "Different: $differentTagCount<br/><br/>";
-        echo "---------------------------------------------<br/>";
     }
 
     /**
@@ -189,21 +233,21 @@ abstract class Template
     /**
      * @param string $path
      */
-    final protected function getTemplateFiles($path)
+    final protected function setTemplateFileInfo()
     {
-        // Fájlnevek összegyűjtése a $files tömbbe
+        // Collect file names
         $filesObject = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($path),
+            new \RecursiveDirectoryIterator($this->path),
             \RecursiveIteratorIterator::SELF_FIRST
         );
 
-        // Fájllista szűrése csak .tpl kiterjesztésű fájlokra
+        // Filter files by their extension and store their name and content
         foreach ($filesObject as $name => $object) {
             if (pathinfo($name, PATHINFO_EXTENSION) == $this->getExtension()) {
-                $this->files[] = $name;
+                $this->fileNames[] = $name;
+                $this->fileContents[$name]= file_get_contents($name);
             }
         }
-        echo "FILES: " . count($this->files) . "<br/>";
     }
 
     /**
@@ -221,26 +265,6 @@ abstract class Template
             mkdir($this->getTempDirectory());
         }
         file_put_contents(realpath($this->getTempDirectory()) . "/$toFile.txt", $content);
-    }
-
-    /**
-     * Template-ek egy tömböt visszaadó PHP fájlba írása.
-     * @param string $toFile
-     * @param array $templates
-     */
-    final protected function writeTagsToPHPFile($toFile, array $templates)
-    {
-        $content = "<?php return array(\n";
-        foreach ($templates as $k => $v) {
-            $k = addslashes($k);
-            $v = addslashes($v);
-            $content .= "'" . $k . "' =>\n'" . $v . "',\n\n";
-        }
-        $content .= ");\n";
-        if (is_dir($this->getTempDirectory()) != true) {
-            mkdir($this->getTempDirectory());
-        }
-        file_put_contents(realpath($this->getTempDirectory()) . "/$toFile.php", $content);
     }
 
     /**
@@ -279,17 +303,23 @@ abstract class Template
     final public function printConversionInfo()
     {
         $differentSum= 0;
+
+        echo $this->injectionConverter->getName() . "<br/>";
+        $this->injectionConverter->printConversionInfo();
+        echo "----------------------------------------------<br/>";
+
         foreach ($this->converters as $converter) {
             if ($converter instanceof Converter) {
                 $differentSum+= $converter->getConversionInfoDifferentSum();
 
                 echo $converter->getName() . "<br/>";
-                $converter->echoConversionInfo();
+                $converter->printConversionInfo();
                 echo "----------------------------------------------<br/>";
             }
         }
 
         $allSum= 0;
+
         if (empty($this->tagInfo) == false) {
             foreach ($this->tagInfo as $key => $info) {
                 if (isset($this->tags[$key]) && $key != $this->tags[$key]) {
@@ -298,25 +328,58 @@ abstract class Template
             }
         }
         echo "----------------------------------------------<br/>";
+        echo "INJECTIONS CONVERTED:<br/>";
+        echo "Different: " . $this->injectionConverter->getConversionInfoDifferentSum() . "<br/>";
+        echo "All: " . $this->injectionConverter->getAllConversionSum() . "<br/>";
+
+        echo "----------------------------------------------<br/>";
         echo "TAGS CONVERTED:<br/>";
-        echo "All: $allSum<br/>";
-        echo "Different: $differentSum<br/>";
+        echo "<table>";
+        echo "<tr><th></th><th>Converted</th><th>From</th><th>Rate</th></tr>";
+        echo "<tr><td>Different:</td><td>$differentSum</td><td>$this->differentTagCount</td><td>".
+            (round($differentSum / $this->differentTagCount, 5)*100) . " %</td></tr>";
+        echo "<tr><td>All:</td><td>$allSum</td><td>$this->allTagCount</td><td>" .
+            (round($allSum / $this->allTagCount, 5)*100) . " %</td></tr>";
+    }
+
+    /**
+     * @return InjectionConverter|null
+     */
+    public function getInjectionConverter()
+    {
+        return $this->injectionConverter;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    /**
+     * @param string $path
+     */
+    public function setPath($path)
+    {
+        $this->path = $path;
     }
 
     /**
      * @return array
      */
-    public function getFiles()
+    public function getFileContents()
     {
-        return $this->files;
+        return $this->fileContents;
     }
 
     /**
-     * @param array $files
+     * @return array
      */
-    public function setFiles($files)
+    public function getFileNames()
     {
-        $this->files = $files;
+        return $this->fileNames;
     }
 
     /**
@@ -349,5 +412,53 @@ abstract class Template
     public function setExtension($extension)
     {
         $this->extension = $extension;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplateCollectorRegex()
+    {
+        return $this->templateCollectorRegex;
+    }
+
+    /**
+     * @param string $templateCollectorRegex
+     */
+    public function setTemplateCollectorRegex($templateCollectorRegex)
+    {
+        $this->templateCollectorRegex = $templateCollectorRegex;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getProjectName()
+    {
+        return $this->projectName;
+    }
+
+    /**
+     * @param mixed $projectName
+     */
+    public function setProjectName($projectName)
+    {
+        $this->projectName = $projectName;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAllTagCount()
+    {
+        return $this->allTagCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDifferentTagCount()
+    {
+        return $this->differentTagCount;
     }
 }

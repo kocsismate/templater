@@ -1,12 +1,14 @@
 <?php
 namespace app\twig;
 
+use app\InjectionConverter;
 use app\php\PHPTemplate;
 use app\Template;
 use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
 use app\twig\converters\php\PHPConverter;
+use app\twig\converters\php\StaticConverter;
 
 /**
  * Az osztály rövid leírása
@@ -25,17 +27,10 @@ final class TwigTemplate extends Template
      */
     protected function setConverters()
     {
+        $this->addConverter(new StaticConverter());
         $this->addConverter(new EchoConverter());
         $this->addConverter(new IfConverter());
         $this->addConverter(new ForeachConverter());
-    }
-
-    /**
-     * @return string
-     */
-    protected function getTemplateCollectorRegex()
-    {
-        return "";
     }
 
     /**
@@ -49,15 +44,16 @@ final class TwigTemplate extends Template
     /**
      * @see \app\Template::convertFromPHP()
      */
-    public function convertFromPHP($extension, $fromPath, $toFileName)
+    public function convertFromPHP()
     {
-        $phpTemplate = new PHPTemplate($extension, $fromPath);
-        $this->tags = $phpTemplate->getTags();
-        $this->files= $phpTemplate->getFiles();
-        $this->setTagInfo($phpTemplate->getTagInfo());
+        $this->setSourceTemplate(new PHPTemplate());
+        $this->initialize();
+
+        // Convert tags and write files
+        $this->convertInjected($this->projectName);
         $this->convertPHPTags();
-        $this->writeTagsToFile($toFileName . "-converted", $this->getConvertedTags());
-        $this->writeTagsToFile($toFileName . "-remaining", $this->getRemainingTags());
+        $this->writeTagsToFile($this->projectName . "-converted", $this->getConvertedTags());
+        $this->writeTagsToFile($this->projectName . "-remaining", $this->getRemainingTags());
     }
 
     protected function convertPHPTags()
@@ -65,8 +61,8 @@ final class TwigTemplate extends Template
         foreach ($this->tags as &$tag) {
             $u= $tag;
 
-            // Conversion
-            $u= $this->convertTag($u);
+            // Automatic conversion
+            $u = $this->convertTag($u);
 
             // Fallback if there was no conversion and the input has multiple lines
             if ($u == $tag && substr_count($tag, "\n") >= 1) {

@@ -25,14 +25,14 @@ class ForeachConverter extends Converter
     }
 
     /**
-     * @param $template
+     * @param string $tag
      * @return string
      */
-    public function convert($template)
+    public function convert($tag)
     {
         /* Lecseréli a <?php foreach($a as $v) ?> típusú template-eket */
         $name = "Value";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
             PHPConverter::getExpressionRegex(true) . "\s*as\s*" . PHPConverter::getVariableRegex(true) .
             PHPTemplate::FOREACH_HEAD_END . PHPTemplate::TEMPLATE_END . "/s",
@@ -44,7 +44,7 @@ class ForeachConverter extends Converter
 
                 return $result;
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -54,12 +54,12 @@ class ForeachConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         /* Lecseréli a <?php foreach($a as $k => $v) ?> típusú template-eket */
         $name = "Key and value";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::FOREACH_HEAD_BEGIN .
             PHPConverter::getExpressionRegex(true) . "\s*as\s*" .
             PHPConverter::getVariableRegex(true) . "\s*=>\s*" . PHPConverter::getVariableRegex(true) .
@@ -74,7 +74,7 @@ class ForeachConverter extends Converter
 
                 return $result;
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -84,16 +84,16 @@ class ForeachConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         /* Lecseréli a <?php endforeach; ?> típusú template-eket */
         $name = "Key and value";
-        $template = preg_replace(
+        $tag = preg_replace(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ENDFOREACH_STATEMENT .
             PHPTemplate::TEMPLATE_END . "/s",
             "{% endfor %}",
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -103,9 +103,9 @@ class ForeachConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
-        return $template;
+        return $tag;
     }
 }

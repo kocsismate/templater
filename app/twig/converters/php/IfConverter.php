@@ -25,14 +25,14 @@ class IfConverter extends Converter
     }
 
     /**
-     * @param $template
+     * @param string $tag
      * @return string
      */
-    public function convert($template)
+    public function convert($tag)
     {
         /* Lecseréli a <?php if ($warning) ?> típusú template-eket */
         $name = "Conditional Statements";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::IF_CONDITION_BEGIN .
             PHPConverter::getConditionalExpressionRegex(true) .
             PHPTemplate::IF_CONDITION_END . PHPTemplate::TEMPLATE_END . "/s",
@@ -40,7 +40,7 @@ class IfConverter extends Converter
                 $from = 1;
                 return "{% if " . PHPConverter::convertConditionalExpression($matches, $from) . " %}";
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -50,12 +50,12 @@ class IfConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         /* Lecseréli a <?php elseif ($warning) ?> típusú template-eket */
         $name = "Elseif Statements";
-        $template = preg_replace_callback(
+        $tag = preg_replace_callback(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ELSE_IF_CONDITION_BEGIN .
             PHPConverter::getConditionalExpressionRegex(true) .
             PHPTemplate::IF_CONDITION_END . PHPTemplate::TEMPLATE_END . "/s",
@@ -63,7 +63,7 @@ class IfConverter extends Converter
                 $from = 1;
                 return "{% elseif " . PHPConverter::convertConditionalExpression($matches, $from) . " %}";
             },
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -73,15 +73,15 @@ class IfConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         /* Lecseréli a <?php else ?> típusú template-eket */
         $name = "Else Statements";
-        $template = preg_replace(
+        $tag = preg_replace(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ELSE_BEGIN . PHPTemplate::TEMPLATE_END . "/s",
             "{% else %}",
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -91,15 +91,15 @@ class IfConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
         /* Lecseréli a <?php endif; ?> típusú template-eket */
         $name = "Endif Statements";
-        $template = preg_replace(
+        $tag = preg_replace(
             "/" . PHPTemplate::TEMPLATE_START . PHPTemplate::ENDIF_STATEMENT . PHPTemplate::TEMPLATE_END . "/s",
             "{% endif %}",
-            $template,
+            $tag,
             -1,
             $count
         );
@@ -109,9 +109,9 @@ class IfConverter extends Converter
             $this->conversionInfo[$name] = 0;
         }
         if ($count !== 0) {
-            return $template;
+            return $tag;
         }
 
-        return $template;
+        return $tag;
     }
 }
