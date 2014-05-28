@@ -122,11 +122,11 @@ abstract class Template
     final public function saveConversion()
     {
         //Convert tags
+        $info= $this->getTagInfo();
         foreach ($this->getConvertedTags() as $key => $tag) {
-            $info= $this->getTagInfo();
             foreach ($info[$key]["fileNames"] as $fileName) {
-                $this->fileContents= str_replace($key, $tag, $this->fileContents[$fileName]);
-                file_put_contents($fileName, $this->fileContents);
+                $this->fileContents[$fileName]= str_replace($key, $tag, $this->fileContents[$fileName]);
+                //file_put_contents($fileName, $this->fileContents);
             }
         }
     }
@@ -187,7 +187,7 @@ abstract class Template
                             $this->tagInfo[$m]= array("fileNames" => array(), "count" => 0);
                             $this->differentTagCount++;
                         }
-                        $this->tagInfo[$m]["fileNames"][]= realpath($fileName);
+                        $this->tagInfo[$m]["fileNames"][]= $fileName;
                         $this->tagInfo[$m]["count"]++;
                         $this->allTagCount++;
                     }
@@ -197,7 +197,7 @@ abstract class Template
     }
 
     /**
-     * Az eddig már módosított template-eket adja vissza.
+     * Az eddig már módosított tageket adja vissza.
      * @return array
      */
     final protected function getConvertedTags()
@@ -327,6 +327,10 @@ abstract class Template
                 }
             }
         }
+
+        $rateDifferent= $this->differentTagCount != 0? round($differentSum / $this->differentTagCount, 5)* 100 : 0;
+        $rateAll= $allSum != 0? round($allSum / $this->allTagCount, 5) * 100 : 0;
+
         echo "----------------------------------------------<br/>";
         echo "INJECTIONS CONVERTED:<br/>";
         echo "Different: " . $this->injectionConverter->getConversionInfoDifferentSum() . "<br/>";
@@ -337,9 +341,9 @@ abstract class Template
         echo "<table>";
         echo "<tr><th></th><th>Converted</th><th>From</th><th>Rate</th></tr>";
         echo "<tr><td>Different:</td><td>$differentSum</td><td>$this->differentTagCount</td><td>".
-            (round($differentSum / $this->differentTagCount, 5)*100) . " %</td></tr>";
+            $rateDifferent . " %</td></tr>";
         echo "<tr><td>All:</td><td>$allSum</td><td>$this->allTagCount</td><td>" .
-            (round($allSum / $this->allTagCount, 5)*100) . " %</td></tr>";
+            $rateAll . " %</td></tr>";
     }
 
     /**
