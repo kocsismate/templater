@@ -47,10 +47,9 @@ final class TwigTemplate extends Template
     public function convertFromPHP()
     {
         $this->setSourceTemplate(new PHPTemplate());
-        $this->initialize();
+        $this->initializeConversion();
 
         // Convert tags and write files
-        $this->convertInjected($this->projectName);
         $this->convertPHPTags();
         $this->writeTagsToFile($this->projectName . "-converted", $this->getConvertedTags());
         $this->writeTagsToFile($this->projectName . "-remaining", $this->getRemainingTags());
