@@ -37,18 +37,18 @@ class InjectionConverter extends Converter
      */
     public function convert($templateFileContent)
     {
-        $i= 1;
+        $name = "Injection";
+        if (isset($this->conversionInfo[$name]) !== true) {
+            $this->conversionInfo[$name]= count($this->injections);
+        }
+
         foreach ($this->injections as $key => $injection) {
-            $name = "Injection #$i";
             $count= 0;
             $templateFileContent= preg_replace($key, $injection, $templateFileContent, -1, $count);
             if ($count != 0) {
-                $this->conversionInfo[$name] = 1;
                 $this->allConversionSum+= $count;
                 return $templateFileContent;
             }
-
-            $i++;
         }
 
         return $templateFileContent;
@@ -74,9 +74,9 @@ class InjectionConverter extends Converter
      * @param string $projectName
      * @return boolean
      */
-    public function setInjectionsFile($projectName)
+    public function setInjectionsName($projectName)
     {
-        $filename= realpath(__DIR__ . "/../temp/$projectName.php");
+        $filename= realpath(__DIR__ . "/../temp/$projectName-injection.php");
         if (file_exists($filename) == false) {
             $this->injections = array();
             return false;

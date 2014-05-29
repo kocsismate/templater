@@ -86,6 +86,7 @@ abstract class Template
     /**
      * @param string $extension
      * @param string $path
+     * @param string $projectName
      */
     public function __construct($extension = "tpl", $path = null, $projectName = "")
     {
@@ -126,7 +127,7 @@ abstract class Template
         foreach ($this->getConvertedTags() as $key => $tag) {
             foreach ($info[$key]["fileNames"] as $fileName) {
                 $this->fileContents[$fileName]= str_replace($key, $tag, $this->fileContents[$fileName]);
-                file_put_contents($fileName, $this->fileContents);
+                file_put_contents(realpath($fileName), $this->fileContents[$fileName]);
             }
         }
     }
@@ -144,7 +145,7 @@ abstract class Template
 
     protected function convertInjected($projectName)
     {
-        $this->injectionConverter->setInjectionsFile($projectName);
+        $this->injectionConverter->setInjectionsName($projectName);
         foreach ($this->fileContents as &$templateFileContent) {
             $templateFileContent= $this->injectionConverter->convert($templateFileContent);
         }
@@ -161,10 +162,11 @@ abstract class Template
     /**
      * Initializes the template file information and collects the tags.
      */
-    final public function initialize()
+    final public function initializeConversion()
     {
         $this->injectionConverter= new InjectionConverter();
         $this->setTemplateFileInfo();
+        $this->convertInjected($this->projectName);
         $this->setTags();
     }
 
@@ -230,9 +232,6 @@ abstract class Template
         return $result;
     }
 
-    /**
-     * @param string $path
-     */
     final protected function setTemplateFileInfo()
     {
         // Collect file names

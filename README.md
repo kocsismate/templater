@@ -24,7 +24,7 @@ In the temp directory, you will get two files:
 
 ##Tag injection:
 
-You can inject your own searched and replacement tags to Templater. You have to add a "name_of_the_project".php file to the "temp" directory which returns an array. An example is:
+You can inject your own searched and replacement tags to Templater. You have to add a {name_of_the_project}-injection.php file to the "temp" directory which returns an array. An example is:
 
 ```php
 return array(
@@ -32,12 +32,12 @@ return array(
 );
 ```
 
-It will convert those tags which echo a header variable to an included Twig template. Important to know, that Templater
+It will convert those tags which echo a variable named "header" into an included Twig template. Important to know, that Templater
 starts with the conversion of possible injected tags then continues with the automatic replacements.
 
 ##Static method conversion:
 
-Currently, Templater can only convert PHP static method calls with the following signature 
+Currently, Templater can only convert PHP static method calls with the following signature:
 ```php
 <?php echo ClassName::methodName(); ?>
 ```
