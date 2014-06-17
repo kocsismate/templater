@@ -45,10 +45,7 @@ class InjectionConverter extends Converter
         foreach ($this->injections as $key => $injection) {
             $count= 0;
             $templateFileContent= preg_replace($key, $injection, $templateFileContent, -1, $count);
-            if ($count != 0) {
-                $this->allConversionSum+= $count;
-                return $templateFileContent;
-            }
+            $this->allConversionSum+= $count;
         }
 
         return $templateFileContent;
