@@ -261,7 +261,7 @@ abstract class Template
         foreach ($templates as $k => $v) {
             $content .= "$k";
             if ($isWithValue === true) {
-                $content.= "\n\n$v\n";
+                $content.= "\n\n$v";
             }
             $content .= "\n---------------------------------------------------------------------------------\n";
         }
