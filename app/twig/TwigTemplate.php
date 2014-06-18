@@ -54,7 +54,7 @@ final class TwigTemplate extends Template
         // Convert tags and write files
         $this->convertPHPTags();
         $this->writeTagsToFile($this->projectName . "-converted", $this->getConvertedTags());
-        $this->writeTagsToFile($this->projectName . "-remaining", $this->getRemainingTags());
+        $this->writeTagsToFile($this->projectName . "-remaining", $this->getRemainingTags(), false);
     }
 
     protected function convertPHPTags()

@@ -253,12 +253,17 @@ abstract class Template
      * Template-ek txt fájlba írása.
      * @param string $toFile
      * @param array $templates
+     * @param boolean $isWithValue
      */
-    final protected function writeTagsToFile($toFile, array $templates)
+    final protected function writeTagsToFile($toFile, array $templates, $isWithValue = true)
     {
         $content = "";
         foreach ($templates as $k => $v) {
-            $content .= "$k\n\n$v\n---------------------------------------------------------------------------------\n";
+            $content .= "$k";
+            if ($isWithValue === true) {
+                $content.= "\n\n$v\n";
+            }
+            $content .= "\n---------------------------------------------------------------------------------\n";
         }
         if (is_dir($this->getTempDirectory()) != true) {
             mkdir($this->getTempDirectory());
