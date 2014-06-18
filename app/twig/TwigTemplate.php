@@ -8,6 +8,7 @@ use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
 use app\twig\converters\php\PHPConverter;
+use app\twig\converters\php\SetConverter;
 use app\twig\converters\php\StaticConverter;
 
 /**
@@ -28,6 +29,7 @@ final class TwigTemplate extends Template
     protected function setConverters()
     {
         $this->addConverter(new StaticConverter());
+        $this->addConverter(new SetConverter());
         $this->addConverter(new EchoConverter());
         $this->addConverter(new IfConverter());
         $this->addConverter(new ForeachConverter());
