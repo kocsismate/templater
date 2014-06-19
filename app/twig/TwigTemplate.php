@@ -23,12 +23,21 @@ use app\twig\converters\php\StaticConverter;
  */
 final class TwigTemplate extends Template
 {
+
+    /**
+     * @var boolean
+     */
+    protected $isConvertStaticMethods= false;
+
     /**
      * @see \app\Template::setConverters()
      */
     protected function setConverters()
     {
-        $this->addConverter(new StaticConverter());
+        $this->clearConverters();
+        if ($this->isConvertStaticMethods() === true) {
+            $this->addConverter(new StaticConverter());
+        }
         $this->addConverter(new SetConverter());
         $this->addConverter(new EchoConverter());
         $this->addConverter(new IfConverter());
@@ -48,17 +57,20 @@ final class TwigTemplate extends Template
      */
     public function convertFromPHP()
     {
+        $this->setConverters();
         $this->setSourceTemplate(new PHPTemplate());
         $this->initializeConversion();
 
         // Convert tags and write files
         $this->convertPHPTags();
-        $this->writeTagsToFile($this->projectName . "-converted", $this->getConvertedTags());
-        $this->writeTagsToFile($this->projectName . "-remaining", $this->getRemainingTags(), false);
+        $this->writeTagsToFile($this->projectName . "-successful", $this->getConvertedTags());
+        $this->writeTagsToFile($this->projectName . "-unsuccessful", $this->getRemainingTags(), false);
     }
 
     protected function convertPHPTags()
     {
+        $partialConversions= array();
+
         foreach ($this->tags as &$tag) {
             $u= $tag;
 
@@ -67,10 +79,12 @@ final class TwigTemplate extends Template
 
             // Fallback if there was no conversion and the input has multiple lines
             if ($u == $tag && substr_count($tag, "\n") >= 1) {
-                $success= true;
+                $isOneConverted= false;
+                $isAllConverted= true;
                 $lines= explode("\n", $tag);
                 $count= count($lines);
-                for ($i= 0; $i < $count && $success === true; $i++) {
+
+                for ($i= 0; $i < $count; $i++) {
                     // Converting lines into PHP templates
                     if ($i != 0) {
                         $lines[$i]= "<?php " . $lines[$i];
@@ -86,18 +100,41 @@ final class TwigTemplate extends Template
                     // If the line is converted to the source format then saving the "working copy", otherwise failing
                     if ($line != $lines[$i]) {
                         $lines[$i]= $line;
+                        $isOneConverted= true;
                     } else {
-                        $success= false;
+                        $isAllConverted= false;
                     }
                 }
 
                 // If all the lines were converted then converting the whole template
-                if ($success === true) {
+                if ($isAllConverted === true) {
                     $u= implode("\n", $lines);
+                }
+                // If the lines are only partially converted then saving them in the $partialConversions array
+                if ($isAllConverted === false && $isOneConverted === true) {
+                    $partialConversions[$tag]= implode("\n", $lines);
                 }
             }
 
+            $this->writeTagsToFile($this->projectName . "-partial", $partialConversions);
+
             $tag= $u;
         }
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isConvertStaticMethods()
+    {
+        return $this->isConvertStaticMethods;
+    }
+
+    /**
+     * @param boolean $isConvertStaticMethods
+     */
+    public function setIsConvertStaticMethods($isConvertStaticMethods)
+    {
+        $this->isConvertStaticMethods = $isConvertStaticMethods;
     }
 }

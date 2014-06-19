@@ -97,7 +97,6 @@ abstract class Template
         $this->tagInfo = array();
         $this->extension= $extension;
         $this->path= $path;
-        $this->setConverters();
     }
 
     /**
@@ -291,6 +290,11 @@ abstract class Template
         }
 
         return $output;
+    }
+
+    final protected function clearConverters()
+    {
+        $this->converters= array();
     }
 
     /**
