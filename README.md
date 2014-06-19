@@ -18,7 +18,11 @@ Copy your original templates from your project's template directory to a safe lo
 "my-converted-templates"). Then make another backup of it (e.g.: name it as "my-original-templates"). Now you can use
 Templater to modify your files in the "my-converted-templates" directory. Finally start "merging" your new templates
 with the original ones in your project. Remember to check for partial conversions! If you have to re-convert the tags,
-you can replace "my-converted-templates" with "my-original-templates" without affecting your manually converted tags.
+you can replace "my-converted-templates" with "my-original-templates".
+
+The advantage of this method is that you can make as many retries as you want, and modify conversion options without
+affecting your manually converted tags. Of course, if you have an error in your manual work, you have to find a solution
+to efficiently correct it.
 
 ##Usage:
 
@@ -37,7 +41,7 @@ $converter->saveConversion();
 $converter->renameFileExtensions("twig");
 ```
 
-In the temp directory, you will get two files:
+In the temp directory, you will get three files:
 - {name_of_the_project}-unsuccessful: These tags are not yet converted
 - {name_of_the_project}-partial: These tags could have only been partially converted
 - {name_of_the_project}-successful: These tags were converted fully and successfully
