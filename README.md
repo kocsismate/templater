@@ -5,8 +5,8 @@ project where I had to replace the legacy PHP templates to Twig templates. The j
 16,000 PHP tags (sometimes with dozens of lines) in 400+ files.
  
 So thanks to Templater I managed to successfully convert (almost barely) with automatic techniques, the 90% of the
-different tags, and the 81% of all the tags (the majority of the difference comes from the fact that block endings
- - } - cannot be converted without extra work).
+different tags, and the 81% of all the tags (the majority of the difference comes from the fact that block endings, like
+"}" cannot be converted without extra work).
  
 So only ~2200 tags remained for manual conversion, but it came evident soon, that it's still too slow for me. Then I
 introduced "partial conversion", which means that a log file stores those tags which couldn't be fully converted,
