@@ -57,7 +57,7 @@ that Templater starts with the conversion of possible injected tags then continu
 
 ##Static method conversion:
 
-You can also set static method conversion with TwigTemplate::setIsConvertStaticMethods. Currently, Templater can only
+You can also set static method conversion with TwigTemplate::setIsConvertStaticMethods(). Currently, Templater can only
 convert PHP static method invocations with the following signature:
 ```php
 <?php echo ClassName::methodName(); ?>
