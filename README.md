@@ -1,8 +1,7 @@
 #templater
 
-Currently, the library only supports conversion of PHP templates into Twig Templates. I developed this library for a
-project where I had to replace the legacy PHP templates to Twig templates. The job was enormous: we had more than
-16,000 PHP tags (sometimes with dozens of lines) in 400+ files.
+I developed this library for a project where I had to replace the legacy PHP templates to Twig templates. The job was
+enormous: we had more than 16,000 PHP tags (sometimes with dozens of lines) in 400+ files.
  
 So thanks to Templater I managed to successfully convert (almost barely) with automatic techniques, the 90% of the
 different tags, and the 81% of all the tags (the majority of the difference comes from the fact that block endings, like
