@@ -14,10 +14,11 @@ partially working tags but you can copy the most parts of them to your template 
 
 ##Suggested working method:
 
-Copy your original templates from your project to a safe location (e.g. name them as "my-converted-templates".
-Then make another backup of your directory (e.g.: name them as "my-original-templates"). Now you can use Templater to
-modify your files in the "my-converted-templates" directory. Finally start "merging" your new templates with the
-original ones in your project. Remember to check for partial conversions!
+Copy your original templates from your project's template directory to a safe location (e.g. name the folder as
+"my-converted-templates". Then make another backup of it (e.g.: name it as "my-original-templates"). Now you can use
+Templater to modify your files in the "my-converted-templates" directory. Finally start "merging" your new templates
+with the original ones in your project. Remember to check for partial conversions! If you have to re-convert the tags,
+you can replace "my-converted-templates" with "my-original-templates" without affecting your manually converted tags.
 
 ##Usage:
 
