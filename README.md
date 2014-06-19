@@ -1,6 +1,24 @@
 #templater
 
-Currently, the library supports conversion of PHP templates into Twig Templates.
+Currently, the library only supports conversion of PHP templates into Twig Templates. I developed this library for a
+project where I had to replace the legacy PHP templates to Twig templates. The job was enormous: we had more than
+16,000 PHP tags (sometimes with dozens of lines) in 400+ files.
+ 
+So thanks to Templater I managed to successfully convert (almost barely) with automatic techniques, the 90% of the
+different tags, and the 81% of all the tags (the majority of the difference comes from the fact that block endings
+ - } - cannot be converted without extra work).
+ 
+So only ~2200 tags remained for manual conversion, but it came evident soon, that it's still too slow for me. Then I
+introduced "partial conversion", which means that a log file stores those tags which couldn't be fully converted,
+but some parts of them. It's very safe and useful for long, multiline tags: your templates are not threatened with
+partially working tags but you can copy the most parts of them to your template file.
+
+##Suggested working method:
+
+Copy your original templates from your project to a safe location (e.g. name them as "my-converted-templates".
+Then make another backup of your directory (e.g.: name them as "my-original-templates"). Now you can use Templater to
+modify your files in the "my-converted-templates" directory. Finally start "merging" your new templates with the
+original ones in your project. Remember to check for partial conversions!
 
 ##Usage:
 
