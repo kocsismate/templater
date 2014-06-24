@@ -128,9 +128,13 @@ abstract class Template
         $info= $this->getTagInfo();
         foreach ($this->getConvertedTags() as $key => $tag) {
             foreach ($info[$key]["fileNames"] as $fileName) {
-                $this->fileContents[$fileName]= str_replace($key, $tag, $this->fileContents[$fileName]);
-                file_put_contents(realpath($fileName), $this->fileContents[$fileName]);
+                $this->fileContents[$fileName] = str_replace($key, $tag, $this->fileContents[$fileName]);
             }
+        }
+
+        // Update converted files
+        foreach ($this->fileNames as $fileName) {
+            file_put_contents(realpath($fileName), $this->fileContents[$fileName]);
         }
     }
 
@@ -148,8 +152,8 @@ abstract class Template
     protected function convertInjected($projectName)
     {
         $this->injectionConverter->setInjectionsName($projectName);
-        foreach ($this->fileContents as &$templateFileContent) {
-            $templateFileContent= $this->injectionConverter->convert($templateFileContent);
+        foreach ($this->fileContents as $k => $templateFileContent) {
+            $this->fileContents[$k]= $this->injectionConverter->convert($templateFileContent);
         }
     }
 

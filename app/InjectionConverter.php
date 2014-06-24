@@ -47,7 +47,6 @@ class InjectionConverter extends Converter
             $templateFileContent= preg_replace($key, $injection, $templateFileContent, -1, $count);
             $this->allConversionSum+= $count;
         }
-
         return $templateFileContent;
     }
 
