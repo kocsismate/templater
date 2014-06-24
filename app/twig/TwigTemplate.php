@@ -8,7 +8,7 @@ use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
 use app\twig\converters\php\PHPConverter;
-use app\twig\converters\php\SetConverter;
+use app\twig\converters\php\AssignmentConverter;
 use app\twig\converters\php\StaticConverter;
 
 /**
@@ -38,7 +38,7 @@ final class TwigTemplate extends Template
         if ($this->isConvertStaticMethods() === true) {
             $this->addConverter(new StaticConverter());
         }
-        $this->addConverter(new SetConverter());
+        $this->addConverter(new AssignmentConverter());
         $this->addConverter(new EchoConverter());
         $this->addConverter(new IfConverter());
         $this->addConverter(new ForeachConverter());
@@ -111,7 +111,11 @@ final class TwigTemplate extends Template
                     $u= implode("\n", $lines);
                 }
                 // If the lines are only partially converted then saving them in the $partialConversions array
-                if ($isAllConverted === false && $isOneConverted === true) {
+                if (
+                    $this->isIsPartialConversionEnabled() &&
+                    $this->$isAllConverted === false &&
+                    $isOneConverted === true
+                ) {
                     $partialConversions[$tag]= implode("\n", $lines);
                 }
             }

@@ -75,6 +75,8 @@ abstract class Template
      */
     protected $converters= array();
 
+    protected $isPartialConversionEnabled;
+
     /**
      * @param \app\Template $template
      */
@@ -88,7 +90,7 @@ abstract class Template
      * @param string $path
      * @param string $projectName
      */
-    public function __construct($extension = "tpl", $path = null, $projectName = "")
+    public function __construct($extension = "tpl", $path = null, $projectName = "", $isPartialConversionEnabled= false)
     {
         $this->fileNames= array();
         $this->fileContents= array();
@@ -97,6 +99,7 @@ abstract class Template
         $this->tagInfo = array();
         $this->extension= $extension;
         $this->path= $path;
+        $this->isPartialConversionEnabled= $isPartialConversionEnabled;
     }
 
     /**
@@ -472,5 +475,21 @@ abstract class Template
     public function getDifferentTagCount()
     {
         return $this->differentTagCount;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isIsPartialConversionEnabled()
+    {
+        return $this->isPartialConversionEnabled;
+    }
+
+    /**
+     * @param boolean $isPartialConversionEnabled
+     */
+    public function setIsPartialConversionEnabled($isPartialConversionEnabled)
+    {
+        $this->isPartialConversionEnabled = $isPartialConversionEnabled;
     }
 }

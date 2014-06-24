@@ -14,14 +14,14 @@ use app\php\PHPTemplate;
  * @author kocsismate
  * @since 2014.05.13. 13:28
  */
-class SetConverter extends Converter
+class AssignmentConverter extends Converter
 {
     /**
      * @return string
      */
     public function getName()
     {
-        return "SET CONVERTER";
+        return "VARIABLE ASSIGNMENT CONVERTER";
     }
 
     /**
@@ -34,15 +34,14 @@ class SetConverter extends Converter
         $tag = preg_replace_callback(
             "/" .
             PHPTemplate::TEMPLATE_START .
-            PHPConverter::getVariableCallRegex(true) . '\s*=\s*' .
+            PHPConverter::getVariableRegex(true) . '\s*=\s*' .
             PHPConverter::getExpressionRegex(true) .
             PHPTemplate::OPTIONAL_STATEMENT_END .
             PHPTemplate::TEMPLATE_END .
             "/s",
             function ($matches) {
-                $from= 1;
-                $variable= PHPConverter::convertVariableCall($matches, $from);
-                $from = 4;
+                $variable= PHPConverter::convertVariable($matches[1]);
+                $from = 2;
                 return "{% set " . $variable . " = " . PHPConverter::convertExpression($matches, $from) . " %}";
             },
             $tag,
@@ -62,13 +61,12 @@ class SetConverter extends Converter
         $tag = preg_replace_callback(
             "/" .
             PHPTemplate::TEMPLATE_START .
-            PHPConverter::getVariableCallRegex(true) . '\s*\+\+\s*' .
+            PHPConverter::getVariableRegex(true) . '\s*\+\+\s*' .
             PHPTemplate::OPTIONAL_STATEMENT_END .
             PHPTemplate::TEMPLATE_END .
             "/s",
             function ($matches) {
-                $from= 1;
-                $variable= PHPConverter::convertVariableCall($matches, $from);
+                $variable= PHPConverter::convertVariable($matches[1]);
                 return "{% set $variable = $variable + 1 %}";
             },
             $tag,
@@ -89,7 +87,7 @@ class SetConverter extends Converter
             "/" .
             PHPTemplate::TEMPLATE_START .
             '\s*\+\+\s*' .
-            PHPConverter::getVariableCallRegex(true) .
+            PHPConverter::getVariableRegex(true) .
             PHPTemplate::OPTIONAL_STATEMENT_END .
             PHPTemplate::TEMPLATE_END .
             "/s",
@@ -115,13 +113,12 @@ class SetConverter extends Converter
         $tag = preg_replace_callback(
             "/" .
             PHPTemplate::TEMPLATE_START .
-            PHPConverter::getVariableCallRegex(true) . '\s*\-\-\s*' .
+            PHPConverter::getVariableRegex(true) . '\s*\-\-\s*' .
             PHPTemplate::OPTIONAL_STATEMENT_END .
             PHPTemplate::TEMPLATE_END .
             "/s",
             function ($matches) {
-                $from= 1;
-                $variable= PHPConverter::convertVariableCall($matches, $from);
+                $variable= PHPConverter::convertVariable($matches[1]);
                 return "{% set $variable = $variable - 1 %}";
             },
             $tag,
@@ -142,13 +139,12 @@ class SetConverter extends Converter
             "/" .
             PHPTemplate::TEMPLATE_START .
             '\s*\-\-\s*' .
-            PHPConverter::getVariableCallRegex(true) .
+            PHPConverter::getVariableRegex(true) .
             PHPTemplate::OPTIONAL_STATEMENT_END .
             PHPTemplate::TEMPLATE_END .
             "/s",
             function ($matches) {
-                $from= 1;
-                $variable= PHPConverter::convertVariableCall($matches, $from);
+                $variable= PHPConverter::convertVariable($matches[1]);
                 return "{% set $variable = $variable - 1 %}";
             },
             $tag,

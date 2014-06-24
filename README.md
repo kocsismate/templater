@@ -36,6 +36,7 @@ $converter= new TwigTemplate();
 
 $converter->convertFromPHP("extension_of_templates", "/path/of/templates", "name_of_the_project");
 $converter->setIsConvertStaticMethods(false);
+$converter->setIsPartialConversionEnabled(true);
 $converter->printConversionInfo();
 $converter->saveConversion();
 $converter->renameFileExtensions("twig");
@@ -43,7 +44,7 @@ $converter->renameFileExtensions("twig");
 
 In the temp directory, you will get three files:
 - {name_of_the_project}-unsuccessful: These tags are not yet converted
-- {name_of_the_project}-partial: These tags could have only been partially converted
+- {name_of_the_project}-partial: These tags could have only been partially converted (only if partial conversion is enabled)
 - {name_of_the_project}-successful: These tags were converted fully and successfully
 
 ##Tag injection:
