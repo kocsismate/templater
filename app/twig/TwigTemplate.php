@@ -1,13 +1,11 @@
 <?php
 namespace app\twig;
 
-use app\InjectionConverter;
 use app\php\PHPTemplate;
 use app\Template;
 use app\twig\converters\php\EchoConverter;
 use app\twig\converters\php\ForeachConverter;
 use app\twig\converters\php\IfConverter;
-use app\twig\converters\php\PHPConverter;
 use app\twig\converters\php\AssignmentConverter;
 use app\twig\converters\php\StaticConverter;
 
@@ -112,8 +110,8 @@ final class TwigTemplate extends Template
                 }
                 // If the lines are only partially converted then saving them in the $partialConversions array
                 if (
-                    $this->isIsPartialConversionEnabled() &&
-                    $this->$isAllConverted === false &&
+                    $this->getIsPartialConversionEnabled() &&
+                    $isAllConverted === false &&
                     $isOneConverted === true
                 ) {
                     $partialConversions[$tag]= implode("\n", $lines);

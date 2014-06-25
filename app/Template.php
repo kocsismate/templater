@@ -1,8 +1,6 @@
 <?php
 namespace app;
 
-use app\InjectionConverter;
-
 /**
  * Az osztály rövid leírása
  *
@@ -75,6 +73,9 @@ abstract class Template
      */
     protected $converters= array();
 
+    /**
+     * @var boolean
+     */
     protected $isPartialConversionEnabled;
 
     /**
@@ -484,7 +485,7 @@ abstract class Template
     /**
      * @return boolean
      */
-    public function isIsPartialConversionEnabled()
+    public function getIsPartialConversionEnabled()
     {
         return $this->isPartialConversionEnabled;
     }
