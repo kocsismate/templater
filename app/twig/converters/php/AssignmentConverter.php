@@ -57,6 +57,33 @@ class AssignmentConverter extends Converter
             return $tag;
         }
 
+        $name = "Ternary operator expression";
+        $tag = preg_replace_callback(
+            "/" .
+            PHPTemplate::TEMPLATE_START .
+            PHPConverter::getVariableRegex(true) . '\s*=\s*' .
+            PHPConverter::getTernaryOperatorExpressionRegex(true) .
+            PHPTemplate::OPTIONAL_STATEMENT_END .
+            PHPTemplate::TEMPLATE_END .
+            "/s",
+            function ($matches) {
+                $variable= PHPConverter::convertVariable($matches[1]);
+                $from = 2;
+                return "{% set " . $variable . " = " . PHPConverter::convertTernaryOperatorExpression($matches, $from) . " %}";
+            },
+            $tag,
+            -1,
+            $count
+        );
+        if (isset($this->conversionInfo[$name])) {
+            $this->conversionInfo[$name] += $count;
+        } else {
+            $this->conversionInfo[$name] = 0;
+        }
+        if ($count !== 0) {
+            return $tag;
+        }
+
         $name = "Postfix increase";
         $tag = preg_replace_callback(
             "/" .
@@ -81,6 +108,8 @@ class AssignmentConverter extends Converter
         if ($count !== 0) {
             return $tag;
         }
+
+
 
         $name = "Prefix increase";
         $tag = preg_replace_callback(
