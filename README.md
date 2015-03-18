@@ -32,9 +32,9 @@ require "vendor/autoload.php";
 
 use app\twig\TwigTemplate;
 
-$converter= new TwigTemplate();
+$converter= new TwigTemplate("extension_of_templates", "/path/of/templates", "name_of_the_project");
 
-$converter->convertFromPHP("extension_of_templates", "/path/of/templates", "name_of_the_project");
+$converter->convertFromPHP();
 $converter->setIsConvertStaticMethods(false);
 $converter->setIsPartialConversionEnabled(true);
 $converter->printConversionInfo();
