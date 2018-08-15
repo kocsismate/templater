@@ -1,5 +1,5 @@
 {
-    "name":"kocsismate90/templater",
+    "name":"kocsismate/templater",
     "description":"Templater",
     "type":"project",
     "keywords":["PHP template transformer"],
@@ -7,7 +7,7 @@
     "authors":[
         {
             "name":"Máté Kocsis",
-            "email":"kocsismate90@gmail.com"
+            "email":"kocsismate@woohoolabs.com"
         }
     ],
     "require":{

@@ -1,4 +1,4 @@
-#templater
+# Templater
 
 I developed this library for a project where I had to replace the legacy PHP templates to Twig templates. The job was
 enormous: we had more than 16,000 PHP tags (sometimes with dozens of lines) in 400+ files.
@@ -12,7 +12,7 @@ introduced "partial conversion", which means that a log file stores those tags w
 but some parts of them. It's very safe and useful for long, multiline tags: your templates are not threatened with
 partially working tags but you can copy the most parts of them to your template file.
 
-##Suggested working method:
+## Suggested working method:
 
 Copy your original templates from your project's template directory to a safe location (e.g. name the folder as
 "my-converted-templates"). Then make another backup of it (e.g.: name it as "my-original-templates"). Now you can use
@@ -24,7 +24,7 @@ The advantage of this method is that you can make as many retries as you want, a
 affecting your manually converted tags. Of course, if you have an error in your manual work, you have to find a solution
 to efficiently correct it.
 
-##Usage:
+## Usage:
 
 ```php
 <?php
@@ -47,7 +47,7 @@ In the temp directory, you will get three files:
 - {name_of_the_project}-partial: These tags could have only been partially converted (only if partial conversion is enabled)
 - {name_of_the_project}-successful: These tags were converted fully and successfully
 
-##Tag injection:
+## Tag injection:
 
 You can inject your own searched and replacement tags to Templater. You have to add a {name_of_the_project}-injection.php file to the "temp" directory which returns an array. An example is:
 
@@ -60,7 +60,7 @@ return array(
 It will convert those tags which echo a variable named "header" into an included Twig template. Important to know,
 that Templater starts with the conversion of possible injected tags then continues with the automatic replacements.
 
-##Static method conversion:
+## Static method conversion:
 
 You can also set static method conversion with TwigTemplate::setIsConvertStaticMethods(). Currently, Templater can only
 convert PHP static method invocations with the following signature:
